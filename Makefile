@@ -20,6 +20,9 @@ OPENOCD   = $(DOCKER) $(DOCKERARGS) --device /dev/bus/usb ghdl/synth:prog openoc
 
 
 LPF=constraints/ecp5-hub-5a-75b-v6.1.lpf
+
+# CABGA381 on V6.1
+# CABGA256 on V7.0
 PACKAGE=CABGA381
 # Maybe --timing-allow-fail
 NEXTPNR_FLAGS=--25k --freq 125 --speed 6 --write top-post-route.json
@@ -37,8 +40,6 @@ top.json : $(YOSYS_SCRIPT) $(SOURCE)
 	$(YOSYS) -s $< -o $@
 
 top.config : top.json $(LPF)
-	#									       CABGA381
-	#									       CABGA256
 	$(NEXTPNR) --json $< --lpf $(LPF) --textcfg $@ $(NEXTPNR_FLAGS) --package $(PACKAGE)
 
 top.svf : top.config
