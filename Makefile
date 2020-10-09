@@ -1,7 +1,3 @@
-
-GATEBOYDIR := ./gateboy
-SCREENCTRL := ./screen
-
 SOURCES := $(shell find . -name '*.v')
 
 YOSYS_SCRIPT:=syn.ys
@@ -18,14 +14,17 @@ NEXTPNR   = $(DOCKER) $(DOCKERARGS) ghdl/synth:nextpnr-ecp5 nextpnr-ecp5
 ECPPACK   = $(DOCKER) $(DOCKERARGS) ghdl/synth:trellis ecppack
 OPENOCD   = $(DOCKER) $(DOCKERARGS) --device /dev/bus/usb ghdl/synth:prog openocd
 
-
-LPF=constraints/ecp5-hub-5a-75b-v6.1.lpf
+# V6.1
+#LPF=constraints/ecp5-hub-5a-75b-v6.1.lpf
+# V7.0
+LPF=constraints/ecp5-hub-5a-75b-v7.0.lpf
 
 # CABGA381 on V6.1
+#PACKAGE=CABGA381
 # CABGA256 on V7.0
-PACKAGE=CABGA381
+PACKAGE=CABGA256
 # Maybe --timing-allow-fail
-NEXTPNR_FLAGS=--25k --freq 125 --speed 6 --write top-post-route.json
+NEXTPNR_FLAGS=--25k --freq 25 --speed 6 --write top-post-route.json
 OPENOCD_JTAG_CONFIG=openocd/ft232.cfg
 OPENOCD_DEVICE_CONFIG=openocd/LFE5UM5G-25F.cfg
 
