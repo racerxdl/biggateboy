@@ -1,6 +1,9 @@
-SOURCES := $(shell find . -name '*.v')
-
-YOSYS_SCRIPT:=syn.ys
+SOURCES       := $(shell find . -name '*.v' -not -name '*_tb.v')
+TB_SOURCES    := $(shell find . -name '*_tb.v')
+TB_DSN        := $(TB_SOURCES:%.v=%.dsn)
+TB_DSN_RES    := $(TB_SOURCES:%.v=%.dsn.result)
+VCD_FILES     := $(shell find . -name '*.vcd')
+YOSYS_SCRIPT  := syn.ys
 
 DOCKER=docker
 
@@ -8,11 +11,13 @@ PWD = $(shell pwd)
 DOCKERARGS = run --rm -v $(PWD):/src -w /src
 #
 GHDL      = $(DOCKER) $(DOCKERARGS) ghdl/synth:beta ghdl
-GHDLSYNTH = ghdl
+GHDLSYNTH = $(GHDL)
 YOSYS     = $(DOCKER) $(DOCKERARGS) ghdl/synth:beta yosys
 NEXTPNR   = $(DOCKER) $(DOCKERARGS) ghdl/synth:nextpnr-ecp5 nextpnr-ecp5
 ECPPACK   = $(DOCKER) $(DOCKERARGS) ghdl/synth:trellis ecppack
 OPENOCD   = $(DOCKER) $(DOCKERARGS) --device /dev/bus/usb ghdl/synth:prog openocd
+IVERILOG  = $(DOCKER) $(DOCKERARGS) racerxdl/icarus iverilog
+VVP  			= $(DOCKER) $(DOCKERARGS) racerxdl/icarus vvp
 
 # V6.1
 #LPF=constraints/ecp5-hub-5a-75b-v6.1.lpf
@@ -30,10 +35,28 @@ OPENOCD_DEVICE_CONFIG=openocd/LFE5UM5G-25F.cfg
 
 all : top.svf
 
+%.dsn.result: %.dsn
+	@echo "Running $(@:%.dsn.result=%.dsn) -> $@"
+	@$(VVP) $(@:%.dsn.result=%.dsn) -l $@
+
+%.dsn: %.v
+	@echo "Generating $< -> $@"
+	@$(IVERILOG) -o $@ $< $(SOURCES)
+
+test: $(TB_DSN) $(TB_DSN_RES)
+	@for test in $<; do echo "Running test $$test"; done
+# 	echo "test $<"
+
+
+artifacts: test top.svf
+	@echo "Composing artifacts"
+	@mkdir -p artifacts
+	tar -cvjpf artifacts.tar.bz2 top.svf $(shell find . -name *.vcd);
+
 $(YOSYS_SCRIPT):
 	echo "" > $(YOSYS_SCRIPT)
-	for file in $(SOURCES);	do echo "read_verilog $$file" >> $(YOSYS_SCRIPT); done
-	echo "synth_ecp5 -retime" >> $(YOSYS_SCRIPT)
+	@for file in $(SOURCES);	do echo "read_verilog $$file" >> $(YOSYS_SCRIPT); done
+	echo "synth_ecp5 -retime -top top" >> $(YOSYS_SCRIPT)
 
 top.json : $(YOSYS_SCRIPT) $(SOURCE)
 	$(YOSYS) -s $< -o $@
@@ -48,7 +71,7 @@ prog: top.svf
 	$(OPENOCD) -f $(OPENOCD_JTAG_CONFIG) -f $(OPENOCD_DEVICE_CONFIG) -c "transport select jtag; init; svf $<; exit"
 
 clean:
-	@rm -f work-obj08.cf *.bit *.json *.svf *.config syn.ys
+	@rm -f work-obj08.cf *.bit *.json *.svf *.config syn.ys $(TB_DSN) $(VCD_FILES)
 
 .PHONY: clean prog
 .PRECIOUS: top.json top_out.config top.bit

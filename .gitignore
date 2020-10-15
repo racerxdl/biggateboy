@@ -5,3 +5,7 @@ top-post-route.json
 top.bit
 top.config
 syn.ys
+*.dsn
+*.dsn.out
+*.dsn.result
+*.vcd
