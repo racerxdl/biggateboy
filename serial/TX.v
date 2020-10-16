@@ -7,13 +7,13 @@ module SerialTX (
   output wire tx
 );
 
-parameter inputFrequency = 25000000;
-parameter baudRate       = 115200;
-parameter baudGenWidth   = 16;
+parameter inputFrequency  = 25000000;
+parameter baudRate        = 115200;
+parameter baudGenWidth    = 16;
+parameter baudMax         = (inputFrequency / baudRate);
 
 
 reg  [baudGenWidth-1:0] baudDivider = 0;
-wire [baudGenWidth-1:0] baudMax = (inputFrequency / baudRate);
 
 wire baudClock = baudDivider == baudMax;
 
@@ -85,11 +85,11 @@ end
 
 reg bitOut;
 
-always @(posedge clk)
+always @(*)
 begin
   if (state == S_START)
     bitOut <= 0; // Start bit
-  else if (state == S_STOP0 || state == S_STOP1 || state == S_READY)
+  else if (state == S_STOP0 || state == S_STOP1 || state == S_READY || state == S_STARTED)
     bitOut <= 1;
   else
     bitOut <= txData[state[2:0]];
