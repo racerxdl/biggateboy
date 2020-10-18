@@ -9,3 +9,4 @@ syn.ys
 *.dsn.out
 *.dsn.result
 *.vcd
+artifacts
