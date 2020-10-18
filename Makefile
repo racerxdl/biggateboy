@@ -1,8 +1,12 @@
+ROOTDIR       := $(realpath .)
+TESTGEN       := $(shell cd testdata; find . -name '*.py')
 SOURCES       := $(shell find . -name '*.v' -not -name '*_tb.v')
 TB_SOURCES    := $(shell find . -name '*_tb.v')
 TB_DSN        := $(TB_SOURCES:%.v=%.dsn)
 TB_DSN_RES    := $(TB_SOURCES:%.v=%.dsn.result)
 VCD_FILES     := $(shell find . -name '*.vcd')
+GENERATED_MEM := $(shell find testdata -name '*.mem')
+
 YOSYS_SCRIPT  := syn.ys
 
 DOCKER=docker
@@ -35,9 +39,14 @@ OPENOCD_DEVICE_CONFIG=openocd/LFE5UM5G-25F.cfg
 
 all : top.svf
 
-%.dsn.result: %.dsn
+testdata:
+	@echo "Generating test data"
+	@cd testdata; for test in $(TESTGEN); do echo "	Running $$test"; python3 $$test; cd ..; done
+
+%.dsn.result: %.dsn testdata
 	@echo "Running $(@:%.dsn.result=%.dsn) -> $@"
-	@$(VVP) $(@:%.dsn.result=%.dsn) -l $@
+	@$(VVP) $(@:%.dsn.result=%.dsn) | tee $@
+	@!(cat $@ | grep -q NOK) || (echo "Test $@ failed $$?"; exit 1)
 
 %.dsn: %.v
 	@echo "Generating $< -> $@"
@@ -71,8 +80,8 @@ prog: top.svf
 	$(OPENOCD) -f $(OPENOCD_JTAG_CONFIG) -f $(OPENOCD_DEVICE_CONFIG) -c "transport select jtag; init; svf $<; exit"
 
 clean:
-	@rm -f work-obj08.cf *.bit *.json *.svf *.config syn.ys $(TB_DSN) $(VCD_FILES)
+	@rm -f work-obj08.cf *.bit *.json *.svf *.config syn.ys $(TB_DSN) $(VCD_FILES) $(TB_DSN_RES) $(GENERATED_MEM)
 
-.PHONY: clean prog
+.PHONY: clean prog testdata
 .PRECIOUS: top.json top_out.config top.bit
 

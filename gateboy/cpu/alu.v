@@ -1,0 +1,251 @@
+module ALU (
+  input       [4:0]   op,     // Operation
+  input       [15:0]  X,      // First Operand
+  input       [15:0]  Y,      // Second Operand
+  input       [3:0]   fIn,    // Flag Register Input  ( {Z,N,H,C} )
+
+  output reg  [3:0]   fOut,   // Flag Register Output ( {Z,N,H,C} )
+  output reg  [15:0]  O       // ALU Result
+);
+
+// Z - Zero Flag
+// N - Subtract Flag
+// H - Half Carry Flag
+// C - Carry Flag
+
+localparam FlagZeroBit      = 3; // Z
+localparam FlagSubBit       = 2; // N
+localparam FlagHalfCarryBit = 1; // H
+localparam FlagCarryBit     = 0; // C
+
+// ALU Operations
+parameter OR        = 5'h00;
+parameter AND       = 5'h01;
+parameter XOR       = 5'h02;
+parameter CPL       = 5'h03;
+parameter ADD       = 5'h04;
+parameter ADC       = 5'h05;
+parameter SUB       = 5'h06;
+parameter SBC       = 5'h07;
+parameter RLC       = 5'h08;
+parameter RL        = 5'h09;
+parameter RRC       = 5'h0a;
+parameter RR        = 5'h0b;
+parameter SLA       = 5'h0c;
+parameter SRA       = 5'h0d;
+parameter SRL       = 5'h0e;
+parameter SWAP      = 5'h0f;
+parameter DAA       = 5'h10;
+parameter ADD16     = 5'h11;
+
+wire InputZero      = fIn[FlagZeroBit];
+wire InputCarry     = fIn[FlagCarryBit];
+wire InputSub       = fIn[FlagSubBit];
+wire InputHalfCarry = fIn[FlagHalfCarryBit];
+
+// Execute the operation
+always @(*)
+begin
+  case(op)
+    // These operations are 8 bit only
+    OR:     O = {8'h00, X[7:0] | Y[7:0]};
+    AND:    O = {8'h00, X[7:0] & Y[7:0]};
+    XOR:    O = {8'h00, X[7:0] ^ Y[7:0]};
+    CPL:    O = {8'h00, ~X[7:0]        };
+
+    RLC:    O = {8'h00, X[6:0],      X[7]      };
+    RL:     O = {8'h00, X[6:0],      InputCarry};
+    RRC:    O = {8'h00, X[0],        X[7:1]    };
+    RR:     O = {8'h00, InputCarry,  X[7:1]    };
+    SLA:    O = {8'h00, X[6:0],      1'b0      };
+    SRA:    O = {8'h00, X[7],        X[7:1]    };
+    SRL:    O = {8'h00, 1'b0,        X[7:1]    };
+    SWAP:   O = {8'h00, X[3:0],      X[7:4]    };
+
+    // These operations can be either 8 or 16 bit.
+    // So we always process as 16 bit
+
+    ADD:    O = X + Y;
+    ADD16:  O = X + Y;
+    ADC:    O = X + Y + InputCarry;
+    SUB:    O = X - Y;
+    SBC:    O = X - Y - InputCarry;
+
+    DAA: // That operation is crazy. It adjusts the register for BCD operation instead binary
+    begin
+      if (InputSub)
+      begin
+        // Subtracts 0x60 if has carry
+        // Subtracts 0x06 if has half-carry
+        O = {8'h00, X[7:0] - (InputCarry ? 8'h60 : 8'h00) - (InputHalfCarry ? 8'h06 : 8'h00)};
+      end else begin
+        // Adds 0x60 if has carry or > 0x99                   --> (InputCarry | X[7:0] > 8'h99 ? 8'h60 : 8'h00)
+        // Adds 0x06 if has half carry or lower nibble > 0x09 --> (InputHalfCarry | X[3:0] > 4'h09 ? 8'h06 : 8'h00)
+        O = {8'h00, X[7:0] + (InputCarry | X[7:0] > 8'h99 ? 8'h60 : 8'h00) + (InputHalfCarry | X[3:0] > 4'h9 ? 8'h06 : 8'h00)};
+      end
+    end
+    default: O = 0;
+  endcase
+end
+
+// Set the output flags
+reg [12:0] halfCarryHelper  = 0; // For ADD16 needs one nibble more than a byte
+reg [16:0] carryHelper      = 0; // Needs one bit more than a 16 bit var
+
+always @(*)
+begin
+  // Defaults
+  fOut[FlagZeroBit]       = InputZero;
+  fOut[FlagSubBit]        = InputSub;
+  fOut[FlagHalfCarryBit]  = 0;
+  fOut[FlagCarryBit]      = 0;
+
+  case (op)
+    ADD:
+    begin
+      // Calculate Half carry
+      halfCarryHelper = ({1'b0, X[3:0]} + {1'b0, Y[3:0]});
+
+      // Calculate Carry
+      carryHelper     = ({1'b0, X[7:0]} + {1'b0, Y[7:0]});
+
+      // Set flags
+      fOut[FlagHalfCarryBit] = halfCarryHelper[4];
+      fOut[FlagCarryBit]     = carryHelper[8];
+      fOut[FlagSubBit]       = 0;
+      fOut[FlagZeroBit]      = carryHelper[7:0] == 0;
+    end
+    ADD16:
+    begin
+      // Calculate Half carry
+      halfCarryHelper = ({1'b0, X[11:0]} + {1'b0, Y[11:0]});
+
+      // Calculate Carry
+      carryHelper = ({1'b0, X} + {1'b0, X});
+
+      // Set flags
+      fOut[FlagHalfCarryBit] = halfCarryHelper[12];
+      fOut[FlagCarryBit]     = carryHelper[16];
+      fOut[FlagSubBit]       = 0;
+    end
+    ADC:
+    begin
+      // Calculate Half carry
+      halfCarryHelper <= ({1'b0, X[3:0]} + {1'b0, Y[3:0]} + InputCarry);
+
+      // Calculate Carry
+      carryHelper     <= ({1'b0, X[7:0]} + {1'b0, Y[7:0]} + InputCarry);
+
+      // Set flags
+      fOut[FlagHalfCarryBit] = halfCarryHelper[4];
+      fOut[FlagCarryBit]     = carryHelper[8];
+      fOut[FlagSubBit]       = 0;
+      fOut[FlagZeroBit]      = carryHelper[7:0] == 0;
+    end
+    SUB:
+    begin
+      // Calculate Half carry
+      halfCarryHelper <= ({1'b0, X[3:0]} - {1'b0, Y[3:0]});
+
+      // Calculate Carry
+      carryHelper     <= ({1'b0, X[7:0]} - {1'b0, Y[7:0]});
+
+      // Set flags
+      fOut[FlagHalfCarryBit] = halfCarryHelper[4];
+      fOut[FlagCarryBit]     = carryHelper[8];
+      fOut[FlagSubBit]       = 1;
+      fOut[FlagZeroBit]      = carryHelper[7:0] == 0;
+    end
+    SBC:
+    begin
+      // Calculate Half carry
+      halfCarryHelper <= ({1'b0, X[3:0]} - {1'b0, Y[3:0]} - InputCarry);
+
+      // Calculate Carry
+      carryHelper     <= ({1'b0, X[7:0]} - {1'b0, Y[7:0]} - InputCarry);
+
+      // Set flags
+      fOut[FlagHalfCarryBit] = halfCarryHelper[4];
+      fOut[FlagCarryBit]     = carryHelper[8];
+      fOut[FlagSubBit]       = 1;
+      fOut[FlagZeroBit]      = carryHelper[7:0] == 0;
+    end
+
+    OR:
+    begin
+      fOut[FlagHalfCarryBit] = 0;
+      fOut[FlagCarryBit]     = 0;
+      fOut[FlagSubBit]       = 0;
+      fOut[FlagZeroBit]      = (X[7:0] | Y[7:0]) == 0;
+    end
+    XOR:
+    begin
+      fOut[FlagHalfCarryBit] = 0;
+      fOut[FlagCarryBit]     = 0;
+      fOut[FlagSubBit]       = 0;
+      fOut[FlagZeroBit]      = (X[7:0] ^ Y[7:0]) == 0;
+    end
+    AND:
+    begin
+      fOut[FlagHalfCarryBit] = 1;
+      fOut[FlagCarryBit]     = 0;
+      fOut[FlagSubBit]       = 0;
+      fOut[FlagZeroBit]      = (X[7:0] & Y[7:0]) == 0;
+    end
+
+    RLC:
+    begin
+      fOut[FlagZeroBit]  = X[7:0] == 0; // That shift only will be zero if input is zero
+      fOut[FlagCarryBit] = X[7];
+      fOut[FlagSubBit]   = 0;
+    end
+    RL:
+    begin
+      fOut[FlagZeroBit]  = X[6:0] == 0 | InputCarry;
+      fOut[FlagCarryBit] = X[7];
+      fOut[FlagSubBit]   = 0;
+    end
+    RRC:
+    begin
+      fOut[FlagZeroBit]  = X[7:0] == 0; // That shift only will be zero if input is zero
+      fOut[FlagCarryBit] = X[0];
+      fOut[FlagSubBit]   = 0;
+    end
+    RR:
+    begin
+      fOut[FlagZeroBit] = X[7:1] == 0 | InputCarry;
+      fOut[FlagCarryBit] = X[0];
+      fOut[FlagSubBit] = 0;
+    end
+    SLA:
+    begin
+      fOut[FlagZeroBit] = X[6:0] == 0;
+      fOut[FlagCarryBit] = X[7];
+      fOut[FlagSubBit] = 0;
+    end
+    SRA:
+    begin
+      fOut[FlagZeroBit] = X[7:1] == 0;
+      fOut[FlagCarryBit] = X[0];
+      fOut[FlagSubBit] = 0;
+    end
+    SRL:
+    begin
+      fOut[FlagZeroBit] = X[7:1] == 0;
+      fOut[FlagCarryBit] = X[0];
+      fOut[FlagSubBit] = 0;
+    end
+    SWAP:
+    begin
+      fOut[FlagZeroBit] = X[7:0] == 0;
+      fOut[FlagCarryBit] = 0;
+      fOut[FlagSubBit] = 0;
+      fOut[FlagHalfCarryBit] = 0;
+    end
+    DAA:      fOut[FlagCarryBit] = !InputSub && X[7:0] > 8'h99;
+    default:  fOut[FlagCarryBit] = 0;
+  endcase
+end
+
+endmodule
+
