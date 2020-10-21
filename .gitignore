@@ -10,3 +10,4 @@ syn.ys
 *.dsn.result
 *.vcd
 artifacts
+testdata/*.mem
