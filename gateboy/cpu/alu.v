@@ -19,24 +19,38 @@ localparam FlagHalfCarryBit = 1; // H
 localparam FlagCarryBit     = 0; // C
 
 // ALU Operations
-parameter OR        = 5'h00;
-parameter AND       = 5'h01;
-parameter XOR       = 5'h02;
-parameter CPL       = 5'h03;
-parameter ADD       = 5'h04;
-parameter ADC       = 5'h05;
-parameter SUB       = 5'h06;
-parameter SBC       = 5'h07;
+
+// Op Group 1
+//ADD ADC SUB SBC AND XOR OR CP
+
+parameter ADD       = 5'h00;
+parameter ADC       = 5'h01;
+parameter SUB       = 5'h02;
+parameter SBC       = 5'h03;
+parameter AND       = 5'h04;
+parameter XOR       = 5'h05;
+parameter OR        = 5'h06;
+parameter CP        = 5'h07;
+
+// Op group 2
+//RLCA  RRCA  RLA RRA DAA CPL SCF CCF
 parameter RLC       = 5'h08;
-parameter RL        = 5'h09;
-parameter RRC       = 5'h0a;
+parameter RRC       = 5'h09;
+parameter RL        = 5'h0a;
 parameter RR        = 5'h0b;
-parameter SLA       = 5'h0c;
-parameter SRA       = 5'h0d;
-parameter SRL       = 5'h0e;
-parameter SWAP      = 5'h0f;
-parameter DAA       = 5'h10;
-parameter ADD16     = 5'h11;
+parameter DAA       = 5'h0c;
+parameter CPL       = 5'h0d;
+parameter SCF       = 5'h0e;
+parameter CCF       = 5'h0f;
+
+// From Prefix CB
+parameter SLA       = 5'h10;
+parameter SRA       = 5'h11;
+parameter SRL       = 5'h12;
+parameter SWAP      = 5'h13;
+
+// 16 bit operations
+parameter ADD16     = 5'h20;
 
 wire InputZero      = fIn[FlagZeroBit];
 wire InputCarry     = fIn[FlagCarryBit];
@@ -84,6 +98,9 @@ begin
         O = {8'h00, X[7:0] + (InputCarry | X[7:0] > 8'h99 ? 8'h60 : 8'h00) + (InputHalfCarry | X[3:0] > 4'h9 ? 8'h06 : 8'h00)};
       end
     end
+    CP:      O = X;
+    SCF:     O = X;
+    CCF:     O = X;
     default: O = 0;
   endcase
 end
@@ -121,7 +138,7 @@ begin
       halfCarryHelper = ({1'b0, X[11:0]} + {1'b0, Y[11:0]});
 
       // Calculate Carry
-      carryHelper = ({1'b0, X} + {1'b0, X});
+      carryHelper = ({1'b0, X} + {1'b0, Y});
 
       // Set flags
       fOut[FlagHalfCarryBit] = halfCarryHelper[12];
@@ -244,8 +261,26 @@ begin
     end
     DAA:      fOut[FlagCarryBit] = !InputSub && X[7:0] > 8'h99;
     default:  fOut[FlagCarryBit] = 0;
+    SCF:
+    begin
+      fOut[FlagSubBit] = 0;
+      fOut[FlagHalfCarryBit] = 0;
+      fOut[FlagCarryBit] = 1;
+    end
+    CCF:
+    begin
+      fOut[FlagSubBit] = 0;
+      fOut[FlagHalfCarryBit] = 0;
+      fOut[FlagCarryBit] = ~fIn[FlagCarryBit]; // TODO
+    end
+    CP:
+    begin
+      fOut[FlagZeroBit] = X[7:0] == X[7:0];
+      fOut[FlagCarryBit] = X[7:0] < X[7:0];
+      fOut[FlagSubBit] = 1;
+      fOut[FlagHalfCarryBit] = X[3:0] < X[3:0];
+    end
   endcase
 end
 
 endmodule
-
