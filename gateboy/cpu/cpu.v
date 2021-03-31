@@ -173,7 +173,57 @@ begin
         end
         2'b10: // Group 2
         begin
-          currentState    <= FETCH0;
+          // ALU OP
+          if (InsZ == 3'b111) // A
+          begin
+            case (currentState)
+              EXECUTE0:
+              begin
+                AluOp         <= InsY;
+                AluX          <= RegA;
+                AluY          <= RegA;
+                AluEnable     <= 1;
+                AluWriteA     <= 1;
+                currentState  <= EXECUTE1;
+              end
+              EXECUTE1:
+              begin
+                AluEnable     <= 0;
+                AluWriteA     <= 0;
+                currentState  <= FETCH0;
+              end
+            endcase
+          end
+          else if (InsZ == 3'b110) // [HL]
+          begin
+            // TODO
+            currentState    <= FETCH0;
+          end
+          else
+          begin
+            case (currentState)
+              EXECUTE0:
+              begin
+                AluOp         <= InsY;
+                AluX          <= RegA;
+                RegNum        <= InsZ;
+                currentState  <= EXECUTE1;
+              end
+              EXECUTE1:
+              begin
+                AluEnable     <= 1;
+                AluWriteA     <= 1;
+                AluY          <= RegBankOut;
+                currentState  <= EXECUTE2;
+              end
+              EXECUTE2:
+              begin
+                AluEnable     <= 0;
+                AluWriteA     <= 0;
+                currentState  <= FETCH0;
+              end
+            endcase
+          end
         end
         2'b11: // Group 3
         begin
