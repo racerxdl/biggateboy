@@ -1,0 +1,72 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Wed Mar 31 03:48:29 2021
+[*]
+[dumpfile] "/media/ELTN/Lucas/Works/biggateboy/cpu_test.vcd"
+[dumpfile_mtime] "Wed Mar 31 03:45:45 2021"
+[dumpfile_size] 24115
+[savefile] "/media/ELTN/Lucas/Works/biggateboy/cpu.gtkw"
+[timestart] 0
+[size] 1289 600
+[pos] -1 -1
+*-7.000000 200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] CPUTest.
+[treeopen] CPUTest.cpu.
+[sst_width] 200
+[signals_width] 278
+[sst_expanded] 1
+[sst_vpaned_height] 164
+@28
+CPUTest.clk
+CPUTest.reset
+@22
+CPUTest.dataIn[7:0]
+CPUTest.dataOut[7:0]
+@28
+CPUTest.busWriteEnable
+@22
+CPUTest.address[15:0]
+@200
+-
+@22
+CPUTest.cpu.currentInstruction[7:0]
+@28
+CPUTest.cpu.InsX[1:0]
+CPUTest.cpu.InsY[2:0]
+CPUTest.cpu.InsZ[2:0]
+@200
+-
+@28
+CPUTest.cpu.PCCountEnable
+@22
+CPUTest.cpu.PCDataIn[15:0]
+CPUTest.cpu.PCDataOut[15:0]
+@4023
+^>1 /media/ELTN/Lucas/Works/biggateboy/gtkwave/state_name.py
+CPUTest.cpu.currentState[5:0]
+@200
+-
+-Registers
+@22
+CPUTest.cpu.RegBankIn[7:0]
+@28
+CPUTest.cpu.RegWriteEnable
+@4024
+^>2 /media/ELTN/Lucas/Works/biggateboy/gtkwave/register_bank_name.py
++{Reg8Num} CPUTest.cpu.regBank.regNum[2:0]
+^>3 /media/ELTN/Lucas/Works/biggateboy/gtkwave/register_bank_name16.py
++{Reg16Num} CPUTest.cpu.regBank.regNum[2:0]
+@22
++{SP} CPUTest.cpu.regBank.stackPointer[15:0]
++{B} CPUTest.cpu.regBank.register[0].tmp[7:0]
++{C} CPUTest.cpu.regBank.register[1].tmp[7:0]
++{D} CPUTest.cpu.regBank.register[2].tmp[7:0]
++{E} CPUTest.cpu.regBank.register[3].tmp[7:0]
++{H} CPUTest.cpu.regBank.register[4].tmp[7:0]
++{L} CPUTest.cpu.regBank.register[5].tmp[7:0]
++{S} CPUTest.cpu.regBank.register[6].tmp[7:0]
++{P} CPUTest.cpu.regBank.register[7].tmp[7:0]
++{W} CPUTest.cpu.regBank.register[8].tmp[7:0]
++{Z} CPUTest.cpu.regBank.register[9].tmp[7:0]
+[pattern_trace] 1
+[pattern_trace] 0

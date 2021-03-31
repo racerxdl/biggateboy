@@ -5,16 +5,13 @@ import tempfile
 import subprocess
 
 states = {
-    0: "B",
-    1: "C",
-    2: "D",
-    3: "E",
-    4: "H",
-    5: "L",
-    6: "S",
-    7: "P",
-    8: "W",
-    9: "Z"
+    0: "FETCH0",
+    1: "FETCH1",
+    2: "DECODE",
+    3: "EXECUTE0",
+    4: "EXECUTE1",
+    5: "EXECUTE2",
+    6: "EXECUTE3"
 }
 
 def main(argv0, *args):

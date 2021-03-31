@@ -1,0 +1,12 @@
+
+Instruction
+
+7 6 5 4 3 2 1 0 (Instruction Bit)
+X X Y Y Y Z Z Z
+X X P P Q Z Z Z
+
+
+// GROUP X = 00
+
+0 0 0 0 0 0 0 0 = 0x00 NOP
+0 0 0 0 1 0 0 0 = 0X08 LD (a16), SP
