@@ -7,24 +7,29 @@ FlagHalfCarry = 1 << 1
 FlagCarry     = 1 << 0
 
 # ALU Operations
-OpOR    = 0x00
-OpAND   = 0x01
-OpXOR   = 0x02
-OpCPL   = 0x03
-OpADD   = 0x04
-OpADC   = 0x05
-OpSUB   = 0x06
-OpSBC   = 0x07
+OpADD   = 0x00
+OpADC   = 0x01
+OpSUB   = 0x02
+OpSBC   = 0x03
+OpAND   = 0x04
+OpXOR   = 0x05
+OpOR    = 0x06
+OpCP    = 0x07
 OpRLC   = 0x08
-OpRL    = 0x09
-OpRRC   = 0x0a
+OpRRC   = 0x09
+OpRL    = 0x0a
 OpRR    = 0x0b
-OpSLA   = 0x0c
-OpSRA   = 0x0d
-OpSRL   = 0x0e
-OpSWAP  = 0x0f
-OpDAA   = 0x10
-OpADD16 = 0x11
+OpDAA   = 0x0c
+OpCPL   = 0x0d
+OpSCF   = 0x0e
+OpCCF   = 0x0f
+OpSLA   = 0x10
+OpSRA   = 0x11
+OpSRL   = 0x12
+OpSWAP  = 0x13
+
+OpADD16 = 0x20
+
 
 def Test(op, x=0, y=0, f=0, o=0, fresult=0):
   return {"op":op,"x": x,"y": y,"f":f,"o": o,"fresult" : fresult}

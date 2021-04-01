@@ -1,5 +1,5 @@
 module ALU (
-  input       [4:0]   op,     // Operation
+  input       [5:0]   op,     // Operation
   input       [15:0]  X,      // First Operand
   input       [15:0]  Y,      // Second Operand
   input       [3:0]   fIn,    // Flag Register Input  ( {Z,N,H,C} )
@@ -23,34 +23,34 @@ localparam FlagCarryBit     = 0; // C
 // Op Group 1
 //ADD ADC SUB SBC AND XOR OR CP
 
-parameter ADD       = 5'h00;
-parameter ADC       = 5'h01;
-parameter SUB       = 5'h02;
-parameter SBC       = 5'h03;
-parameter AND       = 5'h04;
-parameter XOR       = 5'h05;
-parameter OR        = 5'h06;
-parameter CP        = 5'h07;
+parameter ADD       = 6'h00;
+parameter ADC       = 6'h01;
+parameter SUB       = 6'h02;
+parameter SBC       = 6'h03;
+parameter AND       = 6'h04;
+parameter XOR       = 6'h05;
+parameter OR        = 6'h06;
+parameter CP        = 6'h07;
 
 // Op group 2
 //RLCA  RRCA  RLA RRA DAA CPL SCF CCF
-parameter RLC       = 5'h08;
-parameter RRC       = 5'h09;
-parameter RL        = 5'h0a;
-parameter RR        = 5'h0b;
-parameter DAA       = 5'h0c;
-parameter CPL       = 5'h0d;
-parameter SCF       = 5'h0e;
-parameter CCF       = 5'h0f;
+parameter RLC       = 6'h08;
+parameter RRC       = 6'h09;
+parameter RL        = 6'h0a;
+parameter RR        = 6'h0b;
+parameter DAA       = 6'h0c;
+parameter CPL       = 6'h0d;
+parameter SCF       = 6'h0e;
+parameter CCF       = 6'h0f;
 
 // From Prefix CB
-parameter SLA       = 5'h10;
-parameter SRA       = 5'h11;
-parameter SRL       = 5'h12;
-parameter SWAP      = 5'h13;
+parameter SLA       = 6'h10;
+parameter SRA       = 6'h11;
+parameter SRL       = 6'h12;
+parameter SWAP      = 6'h13;
 
 // 16 bit operations
-parameter ADD16     = 5'h20;
+parameter ADD16     = 6'h20;
 
 wire InputZero      = fIn[FlagZeroBit];
 wire InputCarry     = fIn[FlagCarryBit];

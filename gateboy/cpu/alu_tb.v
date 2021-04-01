@@ -3,8 +3,8 @@
 module ALUTest;
   // Simulation helpers
   event terminateSimulation;
-  reg [7:0] OpError     [17:0];
-  reg [7:0] OpTotal     [17:0];
+  reg [7:0] OpError     [40:0];
+  reg [7:0] OpTotal     [40:0];
   integer seed = 0; // Random number seed
   integer i;
 
@@ -46,23 +46,28 @@ module ALUTest;
     $readmemb("testdata/alu_tests.mem", testCases);
 
     // Reset errors
-    OpError[alu.OR]     = 0; OpTotal[alu.OR]     = 0;
-    OpError[alu.AND]    = 0; OpTotal[alu.AND]    = 0;
-    OpError[alu.XOR]    = 0; OpTotal[alu.XOR]    = 0;
-    OpError[alu.CPL]    = 0; OpTotal[alu.CPL]    = 0;
     OpError[alu.ADD]    = 0; OpTotal[alu.ADD]    = 0;
     OpError[alu.ADC]    = 0; OpTotal[alu.ADC]    = 0;
     OpError[alu.SUB]    = 0; OpTotal[alu.SUB]    = 0;
     OpError[alu.SBC]    = 0; OpTotal[alu.SBC]    = 0;
+    OpError[alu.AND]    = 0; OpTotal[alu.AND]    = 0;
+    OpError[alu.XOR]    = 0; OpTotal[alu.XOR]    = 0;
+    OpError[alu.OR]     = 0; OpTotal[alu.OR]     = 0;
+    OpError[alu.CP]     = 0; OpTotal[alu.CP]     = 0;
+
     OpError[alu.RLC]    = 0; OpTotal[alu.RLC]    = 0;
-    OpError[alu.RL]     = 0; OpTotal[alu.RL]     = 0;
     OpError[alu.RRC]    = 0; OpTotal[alu.RRC]    = 0;
+    OpError[alu.RL]     = 0; OpTotal[alu.RL]     = 0;
     OpError[alu.RR]     = 0; OpTotal[alu.RR]     = 0;
+    OpError[alu.DAA]    = 0; OpTotal[alu.DAA]    = 0;
+    OpError[alu.CPL]    = 0; OpTotal[alu.CPL]    = 0;
+    OpError[alu.SCF]    = 0; OpTotal[alu.SCF]    = 0;
+    OpError[alu.CCF]    = 0; OpTotal[alu.CCF]    = 0;
+
     OpError[alu.SLA]    = 0; OpTotal[alu.SLA]    = 0;
     OpError[alu.SRA]    = 0; OpTotal[alu.SRA]    = 0;
     OpError[alu.SRL]    = 0; OpTotal[alu.SRL]    = 0;
     OpError[alu.SWAP]   = 0; OpTotal[alu.SWAP]   = 0;
-    OpError[alu.DAA]    = 0; OpTotal[alu.DAA]    = 0;
     OpError[alu.ADD16]  = 0; OpTotal[alu.ADD16]  = 0;
 
     $display("\033[1;37m## Running tests\033[0m");

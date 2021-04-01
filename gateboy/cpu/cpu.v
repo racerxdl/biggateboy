@@ -10,7 +10,7 @@ module CPU (
 // Synchronous ALU
 reg   [15:0]    AluX            = 0;
 reg   [15:0]    AluY            = 0;
-reg   [4:0]     AluOp           = 0;
+reg   [5:0]     AluOp           = 0;
 reg             AluEnable       = 0;
 reg             AluWriteA       = 0;
 
