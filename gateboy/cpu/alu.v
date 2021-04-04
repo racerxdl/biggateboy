@@ -1,5 +1,5 @@
 module ALU (
-  input       [5:0]   op,     // Operation
+  input       [7:0]   op,     // Operation
   input       [15:0]  X,      // First Operand
   input       [15:0]  Y,      // Second Operand
   input       [3:0]   fIn,    // Flag Register Input  ( {Z,N,H,C} )
@@ -34,28 +34,38 @@ parameter CP        = 6'h07;
 
 // Op group 2
 //RLCA  RRCA  RLA RRA DAA CPL SCF CCF
-parameter RLC       = 6'h08;
-parameter RRC       = 6'h09;
-parameter RL        = 6'h0a;
-parameter RR        = 6'h0b;
-parameter DAA       = 6'h0c;
-parameter CPL       = 6'h0d;
-parameter SCF       = 6'h0e;
-parameter CCF       = 6'h0f;
+parameter RLC       = 8'h10;
+parameter RRC       = 8'h11;
+parameter RL        = 8'h12;
+parameter RR        = 8'h13;
+
+parameter DAA       = 8'h14;
+parameter CPL       = 8'h15;
+parameter SCF       = 8'h16;
+parameter CCF       = 8'h17;
 
 // From Prefix CB
-parameter SLA       = 6'h10;
-parameter SRA       = 6'h11;
-parameter SRL       = 6'h12;
-parameter SWAP      = 6'h13;
+parameter SLA       = 8'h24;
+parameter SRA       = 8'h25;
+parameter SRL       = 8'h26;
+parameter SWAP      = 8'h27;
+
+parameter BIT       = 8'h30;
+parameter RES       = 8'h40;
+parameter SET       = 8'h50;
 
 // 16 bit operations
-parameter ADD16     = 6'h20;
+parameter ADD16     = 8'h60;
 
 wire InputZero      = fIn[FlagZeroBit];
 wire InputCarry     = fIn[FlagCarryBit];
 wire InputSub       = fIn[FlagSubBit];
 wire InputHalfCarry = fIn[FlagHalfCarryBit];
+
+wire        IsBIT = op[7:4] == BIT[7:4];
+wire        IsRES = op[7:4] == RES[7:4];
+wire        IsSET = op[7:4] == SET[7:4];
+wire [2:0]  ArgN  = op[2:0];
 
 // Execute the operation
 always @(*)
@@ -101,7 +111,13 @@ begin
     CP:      O = X;
     SCF:     O = X;
     CCF:     O = X;
-    default: O = 0;
+    default:
+    begin
+      if      (IsBIT) O = X;
+      else if (IsRES) O = X & ~(1 << ArgN);
+      else if (IsSET) O = X |  (1 << ArgN);
+      else            O = 0;
+    end
   endcase
 end
 
@@ -279,6 +295,15 @@ begin
       fOut[FlagCarryBit] = X[7:0] < X[7:0];
       fOut[FlagSubBit] = 1;
       fOut[FlagHalfCarryBit] = X[3:0] < X[3:0];
+    end
+    default:
+    begin
+      if      (IsBIT)
+      begin
+        fOut[FlagZeroBit] = X[ArgN] == 0;
+        fOut[FlagSubBit] = 0;
+        fOut[FlagHalfCarryBit] = 1;
+      end
     end
   endcase
 end

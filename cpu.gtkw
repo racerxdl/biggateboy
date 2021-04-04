@@ -1,21 +1,22 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Wed Mar 31 04:05:19 2021
+[*] Sun Apr  4 18:18:56 2021
 [*]
 [dumpfile] "/media/ELTN/Lucas/Works/biggateboy/cpu_test.vcd"
-[dumpfile_mtime] "Wed Mar 31 04:01:36 2021"
-[dumpfile_size] 24208
+[dumpfile_mtime] "Sun Apr  4 18:18:38 2021"
+[dumpfile_size] 67848
 [savefile] "/media/ELTN/Lucas/Works/biggateboy/cpu.gtkw"
-[timestart] 0
-[size] 1289 600
+[timestart] 17273
+[size] 1920 1031
 [pos] -1 -1
-*-7.000000 52 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-8.000000 19553 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] CPUTest.
 [treeopen] CPUTest.cpu.
+[treeopen] CPUTest.cpu.alu.
 [sst_width] 200
-[signals_width] 278
+[signals_width] 311
 [sst_expanded] 1
-[sst_vpaned_height] 164
+[sst_vpaned_height] 316
 @200
 -Bus
 @28
@@ -33,35 +34,39 @@ CPUTest.address[15:0]
 -CPU
 @4022
 ^>1 /media/ELTN/Lucas/Works/biggateboy/gtkwave/state_name.py
-+{State} CPUTest.cpu.currentState[5:0]
++{State} CPUTest.cpu.currentState[7:0]
+^>2 /media/ELTN/Lucas/Works/biggateboy/gtkwave/instruction.py
++{Instruction} CPUTest.cpu.currentInstruction[7:0]
 @22
 +{Instruction} CPUTest.cpu.currentInstruction[7:0]
 @28
 CPUTest.cpu.InsX[1:0]
 CPUTest.cpu.InsY[2:0]
 CPUTest.cpu.InsZ[2:0]
+@4022
+^>3 /media/ELTN/Lucas/Works/biggateboy/gtkwave/cb_instruction.py
++{CB Instruction} CPUTest.cpu.currentCBInstruction[7:0]
+@28
+CPUTest.cpu.CBInsX[1:0]
+CPUTest.cpu.CBInsY[2:0]
+CPUTest.cpu.CBInsZ[2:0]
 @200
 -
 -Program Counter
-@28
-CPUTest.cpu.PCCountEnable
-@22
-CPUTest.cpu.PCDataIn[15:0]
-CPUTest.cpu.PCDataOut[15:0]
-@200
 -
 -Registers
 @22
++{SP} CPUTest.cpu.SP[15:0]
++{PC} CPUTest.cpu.PC[15:0]
++{D8} CPUTest.cpu.regBank.dataOut[7:0]
++{D16} CPUTest.cpu.regBank.dataOut16[15:0]
 +{Reg Input} CPUTest.cpu.RegBankIn[7:0]
-@28
-CPUTest.cpu.RegWriteEnable
 @4024
-^>2 /media/ELTN/Lucas/Works/biggateboy/gtkwave/register_bank_name.py
+^>4 /media/ELTN/Lucas/Works/biggateboy/gtkwave/register_bank_name.py
 +{Reg8Num} CPUTest.cpu.regBank.regNum[2:0]
-^>3 /media/ELTN/Lucas/Works/biggateboy/gtkwave/register_bank_name16.py
+^>5 /media/ELTN/Lucas/Works/biggateboy/gtkwave/register_bank_name16.py
 +{Reg16Num} CPUTest.cpu.regBank.regNum[2:0]
 @22
-+{SP} CPUTest.cpu.regBank.stackPointer[15:0]
 +{B} CPUTest.cpu.regBank.register[0].tmp[7:0]
 +{C} CPUTest.cpu.regBank.register[1].tmp[7:0]
 +{D} CPUTest.cpu.regBank.register[2].tmp[7:0]
@@ -70,8 +75,6 @@ CPUTest.cpu.RegWriteEnable
 +{L} CPUTest.cpu.regBank.register[5].tmp[7:0]
 +{S} CPUTest.cpu.regBank.register[6].tmp[7:0]
 +{P} CPUTest.cpu.regBank.register[7].tmp[7:0]
-+{W} CPUTest.cpu.regBank.register[8].tmp[7:0]
-+{Z} CPUTest.cpu.regBank.register[9].tmp[7:0]
 +{A} CPUTest.cpu.RegA[15:0]
 +{F} CPUTest.cpu.RegF[7:0]
 @200
@@ -80,11 +83,17 @@ CPUTest.cpu.RegWriteEnable
 @28
 +{Enable} CPUTest.cpu.AluEnable
 @22
-+{Operation} CPUTest.cpu.AluOp[4:0]
+CPUTest.cpu.alu.op[7:0]
 @28
 +{Write To A} CPUTest.cpu.AluWriteA
 @22
 +{X} CPUTest.cpu.AluX[15:0]
 +{Y} CPUTest.cpu.AluY[15:0]
+@28
+CPUTest.cpu.alu.alu.fOut[3:0]
++{Carry} CPUTest.cpu.alu.register[0].tmp
++{HalfCarry} CPUTest.cpu.alu.register[1].tmp
++{Sub} CPUTest.cpu.alu.register[2].tmp
++{Zero} CPUTest.cpu.alu.register[3].tmp
 [pattern_trace] 1
 [pattern_trace] 0

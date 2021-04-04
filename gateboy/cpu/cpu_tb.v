@@ -59,7 +59,6 @@ module CPUTest;
     #10
     clk = 1;
     end
-
   end
 
 endmodule

@@ -11,8 +11,17 @@ states = {
     3: "EXECUTE0",
     4: "EXECUTE1",
     5: "EXECUTE2",
-    6: "EXECUTE3"
+    6: "EXECUTE3",
+    7: "EXECUTE4",
+    8: "EXECUTE5"
 }
+
+lastState = -1
+for i in states:
+    if lastState < i:
+        lastState = i
+
+states[lastState + 1] = "TRAP"
 
 def main(argv0, *args):
     fh_in = sys.stdin
