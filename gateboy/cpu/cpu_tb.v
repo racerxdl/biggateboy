@@ -51,6 +51,15 @@ module CPUTest;
 
     reset = 0;
 
+    while (cpu.PC != 16'h0D)
+    begin
+    #10
+    clk = 0;
+
+    #10
+    clk = 1;
+    end
+
     repeat(1000)
     begin
     #10

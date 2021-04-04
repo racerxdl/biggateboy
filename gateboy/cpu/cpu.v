@@ -267,7 +267,7 @@ begin
                         SP[7:0] <= memDataR;
                     else
                     begin
-                      RegNum          <= InsY[2:1] << 1; // BC, DE, HL, SP
+                      RegNum          <= (InsY[2:1] << 1) + 1; // BC, DE, HL, SP
                       RegWriteEnable8 <= 1;
                       RegBankIn       <= memDataR;
                     end
@@ -281,7 +281,7 @@ begin
                       SP[15:8] <= memDataR;
                     else
                     begin
-                      RegNum          <= RegNum + 1; // BC, DE, HL, SP
+                      RegNum          <= RegNum - 1; // BC, DE, HL, SP
                       RegBankIn       <= memDataR;
                     end
                     PC              <= MemAddressPlusOne;
@@ -290,7 +290,7 @@ begin
                 endcase
               end
             end
-            3'b010:
+            3'b010: // LD [YY], A or LD A, [YY]
             begin
               case (currentState)
                 EXECUTE0:
@@ -332,7 +332,42 @@ begin
             // 3'b011:
             // 3'b100:
             // 3'b101:
-            // 3'b110:
+            3'b110:
+            begin
+              case (currentState)
+                EXECUTE0:
+                begin
+                  currentState    <= EXECUTE1;
+                  PC              <= MemAddressPlusOne;
+                  if (InsY == 3'b111) // A
+                  begin // REG_A
+                    AluX            <= memDataR;
+                    AluWriteA       <= 1;
+                    AluEnable       <= 0;
+                    currentState    <= FETCH0;
+                  end
+                  else if (InsY == 3'b110) // [HL]
+                  begin
+                    RegNum          <= REGNUM_H;
+                    currentState    <= EXECUTE1;
+                    memDataW        <= memDataR;
+                  end
+                  else
+                  begin // B, C, D, E, H, L
+                    RegNum          <= InsY;
+                    RegWriteEnable8 <= 1;
+                    RegBankIn       <= memDataR;
+                    currentState    <= FETCH0;
+                  end
+                end
+                EXECUTE1:
+                begin
+                  memAddress    <= RegBankOut16;
+                  RW            <= 1;
+                  currentState  <= FETCH0;
+                end
+              endcase
+            end
             // 3'b111:
           endcase
         end
