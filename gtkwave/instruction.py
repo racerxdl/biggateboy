@@ -151,10 +151,10 @@ def GetInstructionX11(y, z):
     return "UNDEF"
 
   if z == 5:
-    if y < 4:
-      return "PUSH %s" % regGroup2[y]
-    if y == 4:
+    if y == 1:
       return "CALL a16"
+    if y % 1 == 0:
+      return "PUSH %s" % regGroup2[y >> 1]
     return "UNDEF"
 
   if z == 6:

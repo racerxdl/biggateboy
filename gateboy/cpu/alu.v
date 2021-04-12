@@ -23,14 +23,14 @@ localparam FlagCarryBit     = 0; // C
 // Op Group 1
 //ADD ADC SUB SBC AND XOR OR CP
 
-parameter ADD       = 6'h00;
-parameter ADC       = 6'h01;
-parameter SUB       = 6'h02;
-parameter SBC       = 6'h03;
-parameter AND       = 6'h04;
-parameter XOR       = 6'h05;
-parameter OR        = 6'h06;
-parameter CP        = 6'h07;
+parameter ADD       = 8'h00;
+parameter ADC       = 8'h01;
+parameter SUB       = 8'h02;
+parameter SBC       = 8'h03;
+parameter AND       = 8'h04;
+parameter XOR       = 8'h05;
+parameter OR        = 8'h06;
+parameter CP        = 8'h07;
 
 // Op group 2
 //RLCA  RRCA  RLA RRA DAA CPL SCF CCF

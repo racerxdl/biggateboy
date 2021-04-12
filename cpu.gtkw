@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun Apr  4 18:18:56 2021
+[*] Wed Apr  7 01:10:07 2021
 [*]
 [dumpfile] "/media/ELTN/Lucas/Works/biggateboy/cpu_test.vcd"
-[dumpfile_mtime] "Sun Apr  4 18:18:38 2021"
-[dumpfile_size] 67848
+[dumpfile_mtime] "Wed Apr  7 01:09:06 2021"
+[dumpfile_size] 9440112
 [savefile] "/media/ELTN/Lucas/Works/biggateboy/cpu.gtkw"
-[timestart] 17273
+[timestart] 436
 [size] 1920 1031
 [pos] -1 -1
-*-8.000000 19553 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-6.000000 660 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] CPUTest.
 [treeopen] CPUTest.cpu.
 [treeopen] CPUTest.cpu.alu.
@@ -35,6 +35,9 @@ CPUTest.address[15:0]
 @4022
 ^>1 /media/ELTN/Lucas/Works/biggateboy/gtkwave/state_name.py
 +{State} CPUTest.cpu.currentState[7:0]
+@23
+CPUTest.cpu.PC[15:0]
+@4022
 ^>2 /media/ELTN/Lucas/Works/biggateboy/gtkwave/instruction.py
 +{Instruction} CPUTest.cpu.currentInstruction[7:0]
 @22

@@ -11,3 +11,4 @@ syn.ys
 *.vcd
 artifacts
 testdata/*.mem
+.idea

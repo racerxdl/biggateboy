@@ -11,10 +11,8 @@ states = {
     3: "DE",
     4: "HL",
     5: "HL",
-    6: "SP",
-    7: "SP",
-    8: "WZ",
-    9: "WZ"
+    6: "WZ",
+    7: "WZ"
 }
 
 def main(argv0, *args):
