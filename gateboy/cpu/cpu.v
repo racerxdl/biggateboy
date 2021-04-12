@@ -13,6 +13,7 @@ reg   [15:0]    AluY            = 0;
 reg   [7:0]     AluOp           = 0;
 reg             AluEnable       = 0;
 reg             AluWriteA       = 0;
+reg             AluWriteF       = 0;
 
 wire  [15:0]    RegA;
 wire  [7:0]     RegF;
@@ -21,7 +22,7 @@ wire  [15:0]    AluO;
 wire  [15:0]    MemAddressPlusOne   = memAddress + 1;
 wire  [15:0]    MemAddressMinusOne  = memAddress - 1;
 
-ALUSync alu(clk, reset, AluOp, AluX, AluY, AluEnable, AluWriteA, RegA, AluO, RegF);
+ALUSync alu(clk, reset, AluOp, AluX, AluY, AluEnable, AluWriteA, AluWriteF, RegA, AluO, RegF);
 
 // Register Bank
 reg   [2:0]     RegNum          = 0;
@@ -138,6 +139,8 @@ begin
     AluY                  <= 0;
     AluOp                 <= 0;
     AluEnable             <= 0;
+    AluWriteA             <= 0;
+    AluWriteF             <= 0;
 
     // Register Bank Reset
     RegBankIn             <= 0;
@@ -170,6 +173,7 @@ begin
       RegWriteEnable8   <= 0;
       RegWriteEnable16  <= 0;
       AluWriteA         <= 0;
+      AluWriteF         <= 0;
     end
     else if (currentState == FETCH1)
     begin
@@ -527,6 +531,75 @@ begin
                 currentState <= TRAP; // TODO
               end
             end
+            3'b001:
+            begin
+              if (InsY[0] == 0) // POP {BC, DE, HL, AF}
+              begin
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    memAddress    <= SP;
+                    SP            <= SPPlusOne;
+                    currentState  <= EXECUTE1;
+                  end
+                  EXECUTE1:
+                  begin
+                    currentState  <= EXECUTE2;
+                  end
+                  EXECUTE2:
+                  begin
+                    if (InsY[2:1] != 2'b11) // If not AF
+                    begin
+                      RegWriteEnable8 <= 1;
+                      RegBankIn       <= memDataR;
+                      RegNum          <= (InsY[2:1] << 1);
+                    end
+                    else
+                    begin
+                      AluX[15:8] <= memDataR;
+                      AluWriteF  <= 1;
+                    end
+                    memAddress      <= SP;
+                    SP              <= SPPlusOne;
+                    currentState    <= EXECUTE3;
+                  end
+                  EXECUTE3:
+                  begin
+                    currentState  <= EXECUTE4;
+                    RegNum        <= RegNum + 1;
+                  end
+                  EXECUTE4:
+                  begin
+                    if (InsY[2:1] != 2'b11) // If not AF
+                    begin
+                      RegBankIn       <= memDataR;
+                    end
+                    else
+                    begin
+                      AluX[7:0]  <= memDataR;
+                      AluWriteA  <= 1;
+                    end
+                    currentState    <= FETCH0;
+                  end
+                endcase
+              end
+              else if (InsY == 3'b001) // RET
+              begin
+                currentState <= TRAP; // TODO
+              end
+              else if (InsY == 3'b011) // RETI
+              begin
+                currentState <= TRAP; // TODO
+              end
+              else if (InsY == 3'b101) // JP HL
+              begin
+                currentState <= TRAP; // TODO
+              end
+              else                     // LD HL, SP
+              begin
+                currentState <= TRAP; // TODO
+              end
+            end
             3'b010:
             begin
               if (InsY[2] == 0) // JP {NZ, Z, NC, C}, a16
@@ -688,7 +761,6 @@ begin
                   begin
                     memDataW      <= InsY[2:1] == 2'b11 ? {4'b0, RegF} : RegBankOut16[15:8];
                     memAddress    <= SP;
-                    SP            <= SPMinusOne;
                     currentState  <= FETCH0;
                   end
                 endcase

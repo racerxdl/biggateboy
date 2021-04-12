@@ -6,6 +6,7 @@ module ALUSync (
   input wire  [15:0]  Y,          // Second Operand
   input wire          enable,
   input wire          writeA,
+  input wire          writeF,
 
   output reg  [15:0]  A,
   output wire [15:0]  O,
@@ -31,7 +32,11 @@ begin
       if (writeA) A <= O;
       F <= {4'b0000, OutF};
     end
-    else if (writeA) A <= X;
+    else
+    begin
+      if (writeA) A <= {8'b0, X[7:0]};
+      if (writeF) F <= {4'b0, X[11:8]};
+    end
   end
 end
 
