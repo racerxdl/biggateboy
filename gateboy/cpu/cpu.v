@@ -174,6 +174,7 @@ begin
       RegWriteEnable16  <= 0;
       AluWriteA         <= 0;
       AluWriteF         <= 0;
+      AluEnable         <= 0;
     end
     else if (currentState == FETCH1)
     begin
@@ -1046,6 +1047,16 @@ begin
               end
               else
                 currentState <= TRAP; // UNDEF
+            end
+            3'b110:
+            begin
+              AluOp         <= InsY;
+              AluX          <= RegA;
+              AluY          <= memDataR;
+              AluEnable     <= 1;
+              AluWriteA     <= 1;
+              PC            <= MemAddressPlusOne;
+              currentState  <= FETCH0; // UNDEF
             end
             default:
               currentState <= TRAP;
