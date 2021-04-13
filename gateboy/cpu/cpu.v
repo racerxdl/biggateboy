@@ -344,12 +344,67 @@ begin
                 end
               endcase
             end
-            // 3'b011:
+            3'b011: // INC/DEC {BC, DE, HL, SP}
+            begin
+              if (InsY[3:1] == 2'b11) // SP
+              begin
+                SP            <= InsY[0] ? SPMinusOne : SPPlusOne;
+                currentState  <= FETCH0;
+              end
+              case (currentState)
+                EXECUTE0:
+                begin
+                  RegNum        <= InsY[3:1] << 1;
+                  AluY          <= InsY[0] ? $signed(-1) : 1;
+                  AluOp         <= ALU_ADD16;
+                  currentState  <= EXECUTE1;
+                end
+                EXECUTE1:
+                begin
+                  AluX          <= RegBankOut16;
+                  currentState  <= EXECUTE2;
+                end
+                EXECUTE2:
+                begin
+                  RegBankIn16       <= AluO;
+                  RegWriteEnable16  <= 1;
+                  currentState      <= FETCH0;
+                end
+              endcase
+            end
             3'b100: // INC REG
             begin
               if (InsY == 3'b110) // [HL]
               begin
-                currentState    <= TRAP; // TODO
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    RegNum       <= REGNUM_H;
+                    currentState <= EXECUTE1;
+                  end
+                  EXECUTE1:
+                  begin
+                    memAddress   <= RegBankOut16;
+                    currentState <= EXECUTE2;
+                  end
+                  EXECUTE2:
+                  begin
+                    AluY          <= 1;
+                    AluOp         <= ALU_ADD;
+                    currentState  <= EXECUTE3; // Wait Read
+                  end
+                  EXECUTE3:
+                  begin
+                    AluX          <= memDataR;
+                    currentState  <= EXECUTE4; // Wait Read
+                  end
+                  EXECUTE4:
+                  begin
+                    memDataW      <= AluO[7:0]; // Writeback
+                    RW            <= 1;
+                    currentState  <= FETCH0;
+                  end
+                endcase
               end
               else
               begin
@@ -378,7 +433,67 @@ begin
                 endcase
               end
             end
-            // 3'b101:
+            3'b101:
+            begin
+              if (InsY == 3'b110) // [HL]
+              begin
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    RegNum       <= REGNUM_H;
+                    currentState <= EXECUTE1;
+                  end
+                  EXECUTE1:
+                  begin
+                    memAddress   <= RegBankOut16;
+                    currentState <= EXECUTE2;
+                  end
+                  EXECUTE2:
+                  begin
+                    AluY          <= $signed(-1);
+                    AluOp         <= ALU_ADD;
+                    currentState  <= EXECUTE3; // Wait Read
+                  end
+                  EXECUTE3:
+                  begin
+                    AluX          <= memDataR;
+                    currentState  <= EXECUTE4; // Wait Read
+                  end
+                  EXECUTE4:
+                  begin
+                    memDataW      <= AluO[7:0]; // Writeback
+                    RW            <= 1;
+                    currentState  <= FETCH0;
+                  end
+                endcase
+              end
+              else
+              begin
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    RegNum        <= InsY;
+                    AluY          <= $signed(-1);
+                    AluOp         <= ALU_ADD;
+                    currentState  <= EXECUTE1;
+                  end
+                  EXECUTE1:
+                  begin
+                    AluX          <= (InsY == 3'b111) ? RegA : RegBankOut;
+                    AluEnable     <= 1;
+                    AluWriteA     <= (InsY == 3'b111);
+                    currentState  <= (InsY == 3'b111) ? FETCH0 : EXECUTE2;
+                  end
+                  EXECUTE2:
+                  begin
+                    RegBankIn       <= AluO;
+                    RegWriteEnable8 <= 1;
+                    AluEnable       <= 0;
+                    currentState    <= FETCH0;
+                  end
+                endcase
+              end
+            end
             3'b110:
             begin
               case (currentState)
@@ -585,7 +700,42 @@ begin
               end
               else if (InsY == 3'b001) // RET
               begin
-                currentState <= TRAP; // TODO
+                case (currentState)
+                EXECUTE0:
+                begin
+                  RegNum        <= REGNUM_W;
+                  memAddress    <= SP;
+                  SP            <= SPPlusOne;
+                  currentState  <= EXECUTE1;
+                end
+                EXECUTE1:
+                begin
+                  memAddress    <= SP;
+                  SP            <= SPPlusOne;
+                  currentState  <= EXECUTE2;
+                end
+                EXECUTE2:
+                begin
+                  RegWriteEnable8 <= 1;
+                  RegBankIn       <= memDataR;
+                  currentState    <= EXECUTE3;
+                end
+                EXECUTE3:
+                begin
+                  RegNum          <= REGNUM_Z;
+                  RegBankIn       <= memDataR;
+                  currentState    <= EXECUTE4;
+                end
+                EXECUTE4:
+                begin
+                  currentState    <= EXECUTE5;
+                end
+                EXECUTE5:
+                begin
+                  PC              <= RegBankOut16;
+                  currentState    <= FETCH0;
+                end
+                endcase
               end
               else if (InsY == 3'b011) // RETI
               begin

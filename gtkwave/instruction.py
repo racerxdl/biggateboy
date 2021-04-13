@@ -63,9 +63,9 @@ def GetInstructionX00(y, z):
       return "LD A, [HL-]"
   if z == 3:
     if y & 1 == 0:
-      return "DEC %s" % regGroup1[(y & 6) >> 1]
-    else:
       return "INC %s" % regGroup1[(y & 6) >> 1]
+    else:
+      return "DEC %s" % regGroup1[(y & 6) >> 1]
   if z == 4:
     return "INC %s" % regGroup0[y]
   if z == 5:
