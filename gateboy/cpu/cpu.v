@@ -547,7 +547,88 @@ begin
         end
         2'b01: // Group 1
         begin
-          currentState    <= FETCH0;
+          if (InsY == 3'b110 && InsZ == 3'b110) // HALT
+          begin
+            currentState  <= TRAP;
+          end
+          else if (InsY == InsZ) // LD X, X
+          begin
+            currentState  <= FETCH0;
+          end
+          else if (InsY == 3'b110 || InsZ == 3'b110) // From / To memory
+          begin
+            case (currentState)
+            EXECUTE0:
+            begin
+              // Get memory address to be used
+              RegNum       <= REGNUM_H;
+              currentState <= EXECUTE1;
+            end
+            EXECUTE1:
+            begin
+              memAddress    <= RegBankOut16;
+              RegNum        <= InsY == 3'b110 ? InsZ : InsY;
+              currentState  <= EXECUTE2;
+            end
+            EXECUTE2:
+            begin
+              if (InsY == 3'b110) // Writing TO memory
+              begin
+                memDataW  <= RegBankOut;
+                RW        <= 1;
+              end
+              else
+              begin
+                RegBankIn       <= memDataR;
+                RegWriteEnable8 <= 1;
+              end
+              currentState  <= FETCH0;
+            end
+            endcase
+          end
+          else if (InsY == 3'b111 || InsZ == 3'b111)
+          begin
+            if (InsZ == 3'b111)
+            begin
+              RegNum          <= InsY;
+              RegWriteEnable8 <= 1;
+              RegBankIn       <= RegA[7:0];
+              currentState    <= FETCH0;
+            end
+            else
+            begin
+              case(currentState)
+                EXECUTE0:
+                begin
+                  RegNum          <= InsZ;
+                  currentState    <= EXECUTE1;
+                end
+                EXECUTE1:
+                begin
+                  AluX          <= {8'b0, RegBankOut};
+                  AluWriteA     <= 1;
+                  currentState  <= FETCH0;
+                end
+              endcase
+            end
+          end
+          else
+          begin
+            case (currentState)
+            EXECUTE0:
+            begin
+              RegNum            <= InsY;
+              currentState      <= EXECUTE1;
+            end
+            EXECUTE1:
+            begin
+              RegNum            <= InsZ;
+              RegBankIn         <= RegBankOut;
+              RegWriteEnable8   <= 1;
+              currentState      <= FETCH0;
+            end
+            endcase
+          end
         end
         2'b10: // Group 2
         begin
