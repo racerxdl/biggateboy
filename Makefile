@@ -1,5 +1,9 @@
 ROOTDIR       := $(realpath .)
 TESTGEN       := $(shell cd testdata; find . -name '*.py')
+TESTASMSRC    := $(shell find testdata -name '*.s')
+TESTASMOBJ    := $(TESTASMSRC:%.s=%.o)
+TESTASMGB     := $(TESTASMSRC:%.s=%.gb)
+TESTASMMEM    := $(TESTASMSRC:%.s=%.mem)
 SOURCES       := $(shell find . -name '*.v' -not -name '*_tb.v')
 TB_SOURCES    := $(shell find . -name '*_tb.v')
 TB_DSN        := $(TB_SOURCES:%.v=%.dsn)
@@ -22,6 +26,8 @@ ECPPACK   = $(DOCKER) $(DOCKERARGS) ghdl/synth:trellis ecppack
 OPENOCD   = $(DOCKER) $(DOCKERARGS) --device /dev/bus/usb ghdl/synth:prog openocd
 IVERILOG  = $(DOCKER) $(DOCKERARGS) racerxdl/icarus iverilog
 VVP  			= $(DOCKER) $(DOCKERARGS) racerxdl/icarus vvp
+GBASM     = $(DOCKER) $(DOCKERARGS) racerxdl/rgbds rgbasm
+GBLINK    = $(DOCKER) $(DOCKERARGS) racerxdl/rgbds rgblink
 
 # V6.1
 #LPF=constraints/ecp5-hub-5a-75b-v6.1.lpf
@@ -39,7 +45,19 @@ OPENOCD_DEVICE_CONFIG=openocd/LFE5UM5G-25F.cfg
 
 all : top.svf
 
-testdata:
+%.o: %.s
+	@echo "Generating $< -> $@"
+	@$(GBASM) /src/$< -o /src/$@
+
+%.gb: %.o
+	@echo "Generating $< -> $@"
+	@$(GBLINK) -o /src/$@ /src/$<
+
+%.mem: %.gb
+	@echo "Generating $< -> $@"
+	@hexdump -ve '1/1 "%02x\n"' $< > $@
+
+testdata: $(TESTASMMEM)
 	@echo "Generating test data"
 	@cd testdata; for test in $(TESTGEN); do echo "	Running $$test"; python3 $$test; cd ..; done
 
@@ -80,7 +98,7 @@ prog: top.svf
 	$(OPENOCD) -f $(OPENOCD_JTAG_CONFIG) -f $(OPENOCD_DEVICE_CONFIG) -c "transport select jtag; init; svf $<; exit"
 
 clean:
-	@rm -f work-obj08.cf *.bit *.json *.svf *.config syn.ys $(TB_DSN) $(VCD_FILES) $(TB_DSN_RES) $(GENERATED_MEM)
+	@rm -f work-obj08.cf *.bit *.json *.svf *.config syn.ys $(TB_DSN) $(VCD_FILES) $(TB_DSN_RES) $(GENERATED_MEM) $(TESTASMOBJ) $(TESTASMGB)
 
 .PHONY: clean prog testdata
 .PRECIOUS: top.json top_out.config top.bit

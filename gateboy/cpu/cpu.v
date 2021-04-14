@@ -179,8 +179,8 @@ begin
     else if (currentState == FETCH1)
     begin
       PC                  <= MemAddressPlusOne;
-      currentState        <= DECODE;
       memAddress          <= MemAddressPlusOne; // Pre-fetch
+      currentState        <= DECODE;
     end
     else if(currentState == DECODE)
     begin
@@ -228,7 +228,20 @@ begin
                 3'b010: // STOP
                   currentState <= TRAP; // TODO
                 3'b011: // JR s8
-                  currentState <= TRAP; // TODO
+                  case (currentState)
+                    EXECUTE0:
+                    begin
+                      AluX          <= MemAddressPlusOne;
+                      AluY          <= $signed(memDataR);
+                      AluOp         <= ALU_ADD16;
+                      currentState  <= EXECUTE1;
+                    end
+                    EXECUTE1:
+                    begin
+                      PC            <= AluO;
+                      currentState  <= FETCH0;
+                    end
+                  endcase
                 3'b1xx: // JR {NZ, Z, NC, C}, s8
                 begin
                   case (currentState)
@@ -871,7 +884,45 @@ begin
               end
               else  // LD [a16], A or LD [a16], A
               begin
-                currentState <= TRAP; // TODO
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    RegNum          <= REGNUM_W;
+                    RegWriteEnable8 <= 1;
+                    RegBankIn       <= memDataR;
+                    PC              <= MemAddressPlusOne;
+                    memAddress      <= MemAddressPlusOne;
+                    currentState    <= EXECUTE1;
+                  end
+                  EXECUTE1:
+                  begin
+                    currentState    <= EXECUTE2;
+                    RegWriteEnable8 <= 0;
+                    PC              <= MemAddressPlusOne;
+                  end
+                  EXECUTE2:
+                  begin
+                    memAddress      <= {memDataR, RegBankOut};
+                    if (InsY[1] == 0) // TO memory
+                    begin
+                      RW            <= 1;
+                      memDataW      <= RegA[7:0];
+                      currentState  <= FETCH0;
+                    end
+                    else              // FROM memory
+                      currentState <= EXECUTE3;
+                  end
+                  EXECUTE3:
+                  begin
+                    currentState <= EXECUTE4;
+                  end
+                  EXECUTE4:
+                  begin
+                    AluX          <= memDataR;
+                    AluWriteA     <= 1;
+                    currentState  <= FETCH0;
+                  end
+                endcase
               end
             end
             3'b011:

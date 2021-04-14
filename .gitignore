@@ -12,3 +12,5 @@ syn.ys
 artifacts
 testdata/*.mem
 .idea
+*.gb
+*.o
