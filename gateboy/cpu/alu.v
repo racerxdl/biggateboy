@@ -291,10 +291,10 @@ begin
     end
     CP:
     begin
-      fOut[FlagZeroBit] = X[7:0] == X[7:0];
-      fOut[FlagCarryBit] = X[7:0] < X[7:0];
-      fOut[FlagSubBit] = 1;
-      fOut[FlagHalfCarryBit] = X[3:0] < X[3:0];
+      fOut[FlagZeroBit]  = X[7:0] == Y[7:0];
+      fOut[FlagCarryBit] = X[7:0] < Y[7:0];
+      fOut[FlagSubBit]   = 1;
+      fOut[FlagHalfCarryBit] = X[3:0] < Y[3:0];
     end
     default:
     begin

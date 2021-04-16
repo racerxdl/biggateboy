@@ -212,15 +212,23 @@ begin
                     end
                     EXECUTE1:
                     begin
-                      RegNum          <= REGNUM_L;
-                      RegBankIn       <= memDataR;
+                      RegWriteEnable8 <= 0;
                       currentState    <= EXECUTE2;
+                      PC              <= MemAddressPlusOne;
                     end
                     EXECUTE2:
                     begin
                       RegWriteEnable8 <= 0;
-                      memAddress      <= RegBankOut16;
+                      memAddress      <= {memDataR, RegBankOut};
                       RW              <= 1;
+                      memDataW        <= SP[7:0];
+                      currentState    <= EXECUTE3;
+                    end
+                    EXECUTE3:
+                    begin
+                      memAddress      <= MemAddressPlusOne;
+                      RW              <= 1;
+                      memDataW        <= SP[15:8];
                       currentState    <= FETCH0;
                     end
                   endcase
@@ -280,7 +288,32 @@ begin
             begin
               if (InsY[0]) // ADD HL, {BC, DE, HL, SP}
               begin
-                currentState <= TRAP; // TODO
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    if (InsY[2:1] != 2'b11) // Not SP
+                      RegNum <= InsY[2:1] << 1;
+                    currentState <= EXECUTE1;
+                  end
+                  EXECUTE1:
+                  begin
+                    AluX          <= (InsY[2:1] == 2'b11) ? SP : RegBankOut16;
+                    AluOp         <= ALU_ADD16;
+                    RegNum        <= REGNUM_L;
+                    currentState  <= EXECUTE2;
+                  end
+                  EXECUTE2:
+                  begin
+                    AluY          <= RegBankOut16;
+                    currentState  <= EXECUTE3;
+                  end
+                  EXECUTE3:
+                  begin
+                    RegBankIn16       <= AluO;
+                    RegWriteEnable16  <= 1;
+                    currentState      <= FETCH0;
+                  end
+                endcase
               end
               else          // LD {BC, DE, HL, SP}, d16
               begin
@@ -337,6 +370,10 @@ begin
                   currentState  <= EXECUTE2;
                 end
                 EXECUTE2:
+                begin
+                  currentState  <= EXECUTE3; // Idle cycle
+                end
+                EXECUTE3:
                 begin
                   if (InsY[0]) // From BUS
                   begin
@@ -588,15 +625,28 @@ begin
             begin
               if (InsY == 3'b110) // Writing TO memory
               begin
-                memDataW  <= RegBankOut;
+                memDataW  <= InsZ == 3'b111 ? RegA[7:0] : RegBankOut;
                 RW        <= 1;
+                currentState  <= FETCH0;
+              end
+              else
+              begin
+                currentState <= EXECUTE3; // Wait read
+              end
+            end
+            EXECUTE3:
+            begin
+              if (InsY == 3'b111) // A
+              begin
+                AluX      <= memDataR;
+                AluWriteA <= 1;
               end
               else
               begin
                 RegBankIn       <= memDataR;
                 RegWriteEnable8 <= 1;
               end
-              currentState  <= FETCH0;
+              currentState <= FETCH0; // Wait read
             end
             endcase
           end
@@ -669,8 +719,31 @@ begin
           end
           else if (InsZ == 3'b110) // [HL]
           begin
-            // TODO
-            currentState    <= TRAP;
+            case (currentState)
+              EXECUTE0:
+              begin
+                RegNum        <= REGNUM_L;
+                currentState  <= EXECUTE1;
+              end
+              EXECUTE1:
+              begin
+                memAddress    <= RegBankOut16;
+                currentState  <= EXECUTE2;
+              end
+              EXECUTE2:
+              begin
+                AluOp         <= InsY;
+                AluX          <= RegA;
+                currentState  <= EXECUTE3;
+              end
+              EXECUTE3:
+              begin
+                AluY          <= memDataR;
+                AluEnable     <= 1;
+                AluWriteA     <= 1;
+                currentState  <= FETCH0;
+              end
+            endcase
           end
           else
           begin
@@ -705,7 +778,34 @@ begin
             begin
               if (InsY[2] == 0) // RET {NZ, Z, NC, C}
               begin
-                currentState <= TRAP; // TODO
+                  case (currentState)
+                  EXECUTE0:
+                  begin
+                    case (InsY[1:0])
+                      2'b00:  // NZ
+                      begin
+                        currentState <= !(RegF[ALU_FLAG_ZERO]) ? EXECUTE1 : FETCH0;
+                      end
+                      2'b01: //  Z
+                      begin
+                        currentState <= (RegF[ALU_FLAG_ZERO]) ? EXECUTE1 : FETCH0;
+                      end
+                      2'b10: // NC
+                      begin
+                        currentState <= !(RegF[ALU_FLAG_CARRY]) ? EXECUTE1 : FETCH0;
+                      end
+                      2'b11: //  C
+                      begin
+                        currentState <= (RegF[ALU_FLAG_CARRY]) ? EXECUTE1 : FETCH0;
+                      end
+                    endcase
+                  end
+                  EXECUTE1:
+                  begin
+                    currentInstruction  <= 8'b11001001;// Set to normal RET
+                    currentState        <= EXECUTE0;
+                  end
+                  endcase
               end
               else if(InsY[0] == 0) // LD [0xFF00 + a8], A or LD A, [0xFF00 + a8]
               begin
@@ -725,6 +825,10 @@ begin
                   end
                   EXECUTE1:
                   begin
+                    currentState  <= EXECUTE2; // Idle cycle
+                  end
+                  EXECUTE2:
+                  begin
                     AluX          <= memDataR;
                     AluWriteA     <= 1;
                     AluEnable     <= 0;
@@ -738,7 +842,23 @@ begin
               end
               else // LD HL, SP + r8
               begin
-                currentState <= TRAP; // TODO
+                case (currentState)
+                EXECUTE0:
+                begin
+                  RegNum        <= REGNUM_H;
+                  AluX          <= SP;
+                  AluY          <= $signed(memDataR);
+                  AluOp         <= ALU_ADD16;
+                  PC            <= MemAddressPlusOne;
+                  currentState  <= EXECUTE1;
+                end
+                EXECUTE1:
+                begin
+                  RegBankIn16       <= AluO;
+                  RegWriteEnable16  <= 1;
+                  currentState      <= FETCH0;
+                end
+                endcase
               end
             end
             3'b001:
@@ -834,22 +954,82 @@ begin
               end
               else if (InsY == 3'b011) // RETI
               begin
-                currentState <= TRAP; // TODO
+                  case (currentState)
+                  EXECUTE0:
+                  begin
+                    // TODO: Enable Interrupts
+                    currentInstruction  <= 8'b11001001;// Set to normal RET
+                    currentState        <= EXECUTE0;
+                  end
+                  endcase
               end
               else if (InsY == 3'b101) // JP HL
               begin
-                currentState <= TRAP; // TODO
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    RegNum        <= REGNUM_L;
+                    currentState  <= EXECUTE1;
+                  end
+                  EXECUTE1:
+                  begin
+                    PC            <= RegBankOut16;
+                    currentState  <= FETCH0;
+                  end
+                endcase
               end
               else                     // LD HL, SP
               begin
-                currentState <= TRAP; // TODO
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    RegNum        <= REGNUM_L;
+                    currentState  <= EXECUTE1;
+                  end
+                  EXECUTE1:
+                  begin
+                    SP            <= RegBankOut16;
+                    currentState  <= FETCH0;
+                  end
+                endcase
               end
             end
             3'b010:
             begin
               if (InsY[2] == 0) // JP {NZ, Z, NC, C}, a16
               begin
-                currentState <= TRAP; // TODO
+                  case (currentState)
+                  EXECUTE0:
+                  begin
+                    case (InsY[1:0])
+                      2'b00:  // NZ
+                      begin
+                        currentState  <= !(RegF[ALU_FLAG_ZERO]) ? EXECUTE1   : FETCH0;
+                        PC            <= !(RegF[ALU_FLAG_ZERO]) ? 0          : PC + 2;
+                      end
+                      2'b01: //  Z
+                      begin
+                        currentState  <= (RegF[ALU_FLAG_ZERO])  ? EXECUTE1   : FETCH0;
+                        PC            <= (RegF[ALU_FLAG_ZERO])  ? 0          : PC + 2;
+                      end
+                      2'b10: // NC
+                      begin
+                        currentState  <= !(RegF[ALU_FLAG_CARRY]) ? EXECUTE1  : FETCH0;
+                        PC            <= !(RegF[ALU_FLAG_CARRY]) ? 0         : PC + 2;
+                      end
+                      2'b11: //  C
+                      begin
+                        currentState  <= (RegF[ALU_FLAG_CARRY]) ? EXECUTE1   : FETCH0;
+                        PC            <= (RegF[ALU_FLAG_CARRY]) ? 0          : PC + 2;
+                      end
+                    endcase
+                  end
+                  EXECUTE1:
+                  begin
+                    currentInstruction  <= 8'b11000011;// Set to normal JP a16
+                    currentState        <= EXECUTE0;
+                  end
+                  endcase
               end
               else if (InsY[0] == 0) // LD [0xFF00 + C], A or LD A, [0xFF00 + C]
               begin
@@ -874,6 +1054,10 @@ begin
                     end
                   end
                   EXECUTE2:
+                  begin
+                    currentState <= EXECUTE3;
+                  end
+                  EXECUTE3:
                   begin
                     AluX          <= memDataR;
                     AluWriteA     <= 1;
@@ -929,7 +1113,23 @@ begin
             begin
               case (InsY)
                 3'b000: // JP a16
-                  currentState    <= FETCH0; // TODO
+                begin
+                  case (currentState)
+                    EXECUTE0:
+                    begin
+                      RegNum          <= REGNUM_W;
+                      RegWriteEnable8 <= 1;
+                      RegBankIn       <= memDataR;
+                      memAddress      <= MemAddressPlusOne;
+                      currentState    <= EXECUTE1;
+                    end
+                    EXECUTE1:
+                    begin
+                      PC            <= {memDataR, RegBankOut};
+                      currentState  <= FETCH0;
+                    end
+                  endcase
+                end
                 3'b001: // CB d8
                   if (currentState == EXECUTE0) // Common State
                   begin
@@ -1013,11 +1213,11 @@ begin
                   endcase
                   end
                 3'b110: // DI
-                  currentState    <= FETCH0; // TODO
+                  currentState    <= TRAP; // TODO
                 3'b111: // EI
-                  currentState    <= FETCH0; // TODO
+                  currentState    <= TRAP; // TODO
                 default: // TRAP UNDEFINED
-                  currentState <= TRAP;
+                  currentState    <= TRAP;
               endcase
             end
             3'b101:
@@ -1107,7 +1307,40 @@ begin
               AluEnable     <= 1;
               AluWriteA     <= 1;
               PC            <= MemAddressPlusOne;
-              currentState  <= FETCH0; // UNDEF
+              currentState  <= FETCH0;
+            end
+            3'b111:
+            begin
+              // RESET VECTOR
+                // Save PC into [SP]
+                // Jump to 16'b0000000000YYY000
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    // Update PC
+                    PC              <= MemAddressPlusOne;
+
+                    // Set Stack Pointer and address to SP-1 and write
+                    SP              <= SPMinusOne;
+                    memAddress      <= SPMinusOne;
+                    RW              <= 1;
+                    memDataW        <= MemAddressPlusOne[7:0];
+
+                    currentState    <= EXECUTE1;
+                  end
+                  // Save PC into [SP], set PC
+                  EXECUTE1:
+                  begin
+                    // Set dataOut to upper byte of PC and keep WriteEnable
+                    memAddress      <= SPMinusOne;
+                    memDataW        <= PC[15:7];
+                    // Decrement Stack Pointer
+                    SP              <= SPMinusOne;
+                    // Jump to 16'b0000000000YYY000
+                    PC              <= {11'b000, InsY, 3'b000};
+                    currentState    <= FETCH0;
+                  end
+                endcase
             end
             default:
               currentState <= TRAP;

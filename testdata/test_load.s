@@ -41,3 +41,50 @@ mem:
   NOP
   NOP
   NOP
+  LD BC, $FF20
+  LD DE, $FF21
+  LD HL, $FF22
+  LD SP, $FF23
+  NOP
+  LD A, $F0
+  LD [BC], A
+  NOP
+  LD A, $F1
+  LD [DE], A
+  NOP
+  LD A, $F2
+  LD [HL], A
+  NOP
+  LD [$FF80], SP
+  NOP
+  LD A, [BC]
+  LD B, A     ; Should be F0
+  LD A, [DE]
+  LD D, A     ; Should be F1
+  LD A, [HL]
+  LD H, A     ; Should be F2
+  NOP
+  NOP
+  NOP
+  LD A, $66
+  LD [$FF00 + $60], A
+  LD A, $80
+  LD A, [$FF00 + $60]
+  NOP
+  LD SP, $FF00
+  LD HL, SP + $10
+  NOP
+  LD SP, $FF0A
+  LD HL, SP + -5
+  NOP
+  LD C, $80
+  LD A, $FC
+  LD [$FF00 + C], A
+  LD A, $00
+  LD A, [$FF00 + C]
+  NOP
+  LD A, $88
+  LD [$1000], A
+  LD A, $FF
+  LD A, [$1000]
+  NOP
