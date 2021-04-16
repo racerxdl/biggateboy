@@ -397,31 +397,34 @@ begin
             end
             3'b011: // INC/DEC {BC, DE, HL, SP}
             begin
-              if (InsY[3:1] == 2'b11) // SP
+              if (InsY[2:1] == 2'b11) // SP
               begin
                 SP            <= InsY[0] ? SPMinusOne : SPPlusOne;
                 currentState  <= FETCH0;
               end
-              case (currentState)
-                EXECUTE0:
-                begin
-                  RegNum        <= InsY[3:1] << 1;
-                  AluY          <= InsY[0] ? $signed(-1) : 1;
-                  AluOp         <= ALU_ADD16;
-                  currentState  <= EXECUTE1;
-                end
-                EXECUTE1:
-                begin
-                  AluX          <= RegBankOut16;
-                  currentState  <= EXECUTE2;
-                end
-                EXECUTE2:
-                begin
-                  RegBankIn16       <= AluO;
-                  RegWriteEnable16  <= 1;
-                  currentState      <= FETCH0;
-                end
-              endcase
+              else
+              begin
+                case (currentState)
+                  EXECUTE0:
+                  begin
+                    RegNum        <= InsY[3:1] << 1;
+                    AluY          <= InsY[0] ? $signed(-1) : 1;
+                    AluOp         <= ALU_ADD16;
+                    currentState  <= EXECUTE1;
+                  end
+                  EXECUTE1:
+                  begin
+                    AluX          <= RegBankOut16;
+                    currentState  <= EXECUTE2;
+                  end
+                  EXECUTE2:
+                  begin
+                    RegBankIn16       <= AluO;
+                    RegWriteEnable16  <= 1;
+                    currentState      <= FETCH0;
+                  end
+                endcase
+              end
             end
             3'b100: // INC REG
             begin
