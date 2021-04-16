@@ -1008,22 +1008,22 @@ begin
                       2'b00:  // NZ
                       begin
                         currentState  <= !(RegF[ALU_FLAG_ZERO]) ? EXECUTE1   : FETCH0;
-                        PC            <= !(RegF[ALU_FLAG_ZERO]) ? 0          : PC + 2;
+                        PC            <= !(RegF[ALU_FLAG_ZERO]) ? PC         : PC + 2;
                       end
                       2'b01: //  Z
                       begin
                         currentState  <= (RegF[ALU_FLAG_ZERO])  ? EXECUTE1   : FETCH0;
-                        PC            <= (RegF[ALU_FLAG_ZERO])  ? 0          : PC + 2;
+                        PC            <= (RegF[ALU_FLAG_ZERO])  ? PC         : PC + 2;
                       end
                       2'b10: // NC
                       begin
                         currentState  <= !(RegF[ALU_FLAG_CARRY]) ? EXECUTE1  : FETCH0;
-                        PC            <= !(RegF[ALU_FLAG_CARRY]) ? 0         : PC + 2;
+                        PC            <= !(RegF[ALU_FLAG_CARRY]) ? PC        : PC + 2;
                       end
                       2'b11: //  C
                       begin
                         currentState  <= (RegF[ALU_FLAG_CARRY]) ? EXECUTE1   : FETCH0;
-                        PC            <= (RegF[ALU_FLAG_CARRY]) ? 0          : PC + 2;
+                        PC            <= (RegF[ALU_FLAG_CARRY]) ? PC         : PC + 2;
                       end
                     endcase
                   end
@@ -1127,6 +1127,10 @@ begin
                       currentState    <= EXECUTE1;
                     end
                     EXECUTE1:
+                    begin
+                      currentState  <= EXECUTE2;
+                    end
+                    EXECUTE2:
                     begin
                       PC            <= {memDataR, RegBankOut};
                       currentState  <= FETCH0;
