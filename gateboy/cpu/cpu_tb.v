@@ -398,16 +398,126 @@ module CPUTest;
     // if (cpu.SP != 16'h3FFF)$error("Expected register SP to be %04x got %04x", 16'h3FFF, cpu.SP);
 
 
+    // // ----------------------------//
+    // //              JMP            //
+    // // ----------------------------//
+    // for (i = 0; i < memorySize; i=i+1)
+    // begin
+    //   memory[i] = 32'b0;
+    // end
+
+    // reset = 1;
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // reset = 0;
+
+    // $readmemh("testdata/test_jmp.mem", memory);
+
+    // reset = 1;
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // reset = 0;
+
+    // while (cpu.PC != 16'h0C)
+    // begin
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // end
+
+    // if (cpu.RegA[7:0] != 8'h02) $error("Expected register A to be %02x got %02x", 8'h02, cpu.RegA[7:0]);
+
+    // while (cpu.PC != 16'h1F)
+    // begin
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // end
+
+    // if (cpu.RegA[7:0] != 8'h02) $error("Expected register A to be %02x got %02x", 8'h02, cpu.RegA[7:0]);
+
+
+    // while (cpu.PC != 16'h27)
+    // begin
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // end
+
+    // if (cpu.RegA[7:0] != 8'h03) $error("Expected register A to be %02x got %02x", 8'h03, cpu.RegA[7:0]);
+
+    // while (cpu.PC != 16'h34)
+    // begin
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // end
+
+    // if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
+
+
+    // // Set Flag Zero
+    // cpu.alu.F[FlagZeroBit] = 1;
+
+    // while (cpu.PC != 16'h48)
+    // begin
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // end
+    // if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
+    // cpu.alu.F[FlagZeroBit] = 0;
+
+    // cpu.alu.F[FlagCarryBit] = 1;
+    // while (cpu.PC != 16'h55)
+    // begin
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // end
+    // if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
+    // cpu.alu.F[FlagCarryBit] = 0;
+
+    // cpu.alu.F[FlagZeroBit] = 1;
+    // while (cpu.PC != 16'h6D)
+    // begin
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // end
+    // if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
+    // cpu.alu.F[FlagZeroBit] = 0;
+
+    // cpu.alu.F[FlagCarryBit] = 1;
+    // while (cpu.PC != 16'h7C)
+    // begin
+    // #10
+    // clk = 1;
+    // #10
+    // clk = 0;
+    // end
+    // if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
+
     // ----------------------------//
-    //              JMP            //
+    //           CALL/RET          //
     // ----------------------------//
     for (i = 0; i < memorySize; i=i+1)
     begin
       memory[i] = 32'b0;
     end
 
-    $readmemh("testdata/test_jmp.mem", memory);
-
+    $readmemh("testdata/test_callret.mem", memory);
     reset = 1;
     #10
     clk = 1;
@@ -415,7 +525,7 @@ module CPUTest;
     clk = 0;
     reset = 0;
 
-    while (cpu.PC != 16'h0C)
+    while (cpu.PC != 16'h11)
     begin
     #10
     clk = 1;
@@ -423,9 +533,10 @@ module CPUTest;
     clk = 0;
     end
 
-    if (cpu.RegA[7:0] != 8'h02) $error("Expected register A to be %02x got %02x", 8'h02, cpu.RegA[7:0]);
+    if (memory[cpu.SP+0] != 8'h00) $error("Expected memory[%02x] to be %02x got %02x", cpu.SP+0, 8'h0A, memory[cpu.SP+0]);
+    if (memory[cpu.SP+1] != 8'h0A) $error("Expected memory[%02x] to be %02x got %02x", cpu.SP+1, 8'h00, memory[cpu.SP+1]);
 
-    while (cpu.PC != 16'h1F)
+    while (cpu.PC != 16'h0D)
     begin
     #10
     clk = 1;
@@ -433,45 +544,83 @@ module CPUTest;
     clk = 0;
     end
 
-    if (cpu.RegA[7:0] != 8'h02) $error("Expected register A to be %02x got %02x", 8'h02, cpu.RegA[7:0]);
+    if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h11, cpu.RegA[7:0]);
+    if (cpu.regBank.registers[REGNUM_B] != 8'h01) $error("Expected register B to be %02x got %02x", 8'h01, cpu.regBank.registers[REGNUM_B]);
 
-
-    while (cpu.PC != 16'h27)
+    while (cpu.PC != 16'h1A)
     begin
     #10
     clk = 1;
     #10
     clk = 0;
     end
-
-    if (cpu.RegA[7:0] != 8'h03) $error("Expected register A to be %02x got %02x", 8'h03, cpu.RegA[7:0]);
-
-    while (cpu.PC != 16'h34)
-    begin
-    #10
-    clk = 1;
-    #10
-    clk = 0;
-    end
-
-    if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
-
-
-    // Set Flag Zero
     cpu.alu.F[FlagZeroBit] = 1;
 
-    while (cpu.PC != 16'h48)
+    while (cpu.PC != 16'h1E)
     begin
     #10
     clk = 1;
     #10
     clk = 0;
     end
-    if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
+    if (cpu.RegA[7:0] != 8'h00) $error("Expected register A to be %02x got %02x", 8'h11, cpu.RegA[7:0]);
+
+    while (cpu.PC != 16'h24)
+    begin
+    #10
+    clk = 1;
+    #10
+    clk = 0;
+    end
+    if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h11, cpu.RegA[7:0]);
+
     cpu.alu.F[FlagZeroBit] = 0;
-
     cpu.alu.F[FlagCarryBit] = 1;
-    while (cpu.PC != 16'h55)
+
+    while (cpu.PC != 16'h28)
+    begin
+    #10
+    clk = 1;
+    #10
+    clk = 0;
+    end
+    if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h11, cpu.RegA[7:0]);
+
+    while (cpu.PC != 16'h2D)
+    begin
+    #10
+    clk = 1;
+    #10
+    clk = 0;
+    end
+    if (cpu.RegA[7:0] != 8'h02) $error("Expected register A to be %02x got %02x", 8'h11, cpu.RegA[7:0]);
+
+    cpu.alu.F[FlagCarryBit] = 0;
+    cpu.alu.F[FlagZeroBit] = 0;
+    while (cpu.PC != 16'h4C)
+    begin
+    #10
+    clk = 1;
+    #10
+    clk = 0;
+    end
+    if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h02, cpu.RegA[7:0]);
+    if (cpu.regBank.registers[REGNUM_B] != 8'h00) $error("Expected register B to be %02x got %02x", 8'h00, cpu.regBank.registers[REGNUM_B]);
+
+    cpu.alu.F[FlagZeroBit] = 1;
+    while (cpu.PC != 16'h57)
+    begin
+    #10
+    clk = 1;
+    #10
+    clk = 0;
+    end
+    if (cpu.RegA[7:0] != 8'h02) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
+    if (cpu.regBank.registers[REGNUM_B] != 8'h00) $error("Expected register B to be %02x got %02x", 8'h00, cpu.regBank.registers[REGNUM_B]);
+
+    cpu.alu.F[FlagCarryBit] = 0;
+    cpu.alu.F[FlagZeroBit] = 0;
+    while (cpu.PC != 16'h62)
     begin
     #10
     clk = 1;
@@ -479,9 +628,9 @@ module CPUTest;
     clk = 0;
     end
     if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
-    cpu.alu.F[FlagCarryBit] = 0;
+    if (cpu.regBank.registers[REGNUM_B] != 8'h00) $error("Expected register B to be %02x got %02x", 8'h00, cpu.regBank.registers[REGNUM_B]);
+    cpu.alu.F[FlagCarryBit] = 1;
 
-    cpu.alu.F[FlagZeroBit] = 1;
     while (cpu.PC != 16'h6D)
     begin
     #10
@@ -489,21 +638,8 @@ module CPUTest;
     #10
     clk = 0;
     end
-    if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
-    cpu.alu.F[FlagZeroBit] = 0;
-
-    cpu.alu.F[FlagCarryBit] = 1;
-    while (cpu.PC != 16'h7C)
-    begin
-    #10
-    clk = 1;
-    #10
-    clk = 0;
-    end
-    if (cpu.RegA[7:0] != 8'h01) $error("Expected register A to be %02x got %02x", 8'h01, cpu.RegA[7:0]);
-
-
-
+    if (cpu.RegA[7:0] != 8'h02) $error("Expected register A to be %02x got %02x", 8'h02, cpu.RegA[7:0]);
+    if (cpu.regBank.registers[REGNUM_B] != 8'h00) $error("Expected register B to be %02x got %02x", 8'h00, cpu.regBank.registers[REGNUM_B]);
 
     // ----------------------------//
     // // Run GB Bios
@@ -533,10 +669,10 @@ module CPUTest;
     repeat(1000)
     begin
     #10
-    clk = 0;
+    clk = 1;
 
     #10
-    clk = 1;
+    clk = 0;
     end
   end
 

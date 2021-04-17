@@ -1001,38 +1001,38 @@ begin
             begin
               if (InsY[2] == 0) // JP {NZ, Z, NC, C}, a16
               begin
-                  case (currentState)
-                  EXECUTE0:
-                  begin
-                    case (InsY[1:0])
-                      2'b00:  // NZ
-                      begin
-                        currentState  <= !(RegF[ALU_FLAG_ZERO]) ? EXECUTE1   : FETCH0;
-                        PC            <= !(RegF[ALU_FLAG_ZERO]) ? PC         : PC + 2;
-                      end
-                      2'b01: //  Z
-                      begin
-                        currentState  <= (RegF[ALU_FLAG_ZERO])  ? EXECUTE1   : FETCH0;
-                        PC            <= (RegF[ALU_FLAG_ZERO])  ? PC         : PC + 2;
-                      end
-                      2'b10: // NC
-                      begin
-                        currentState  <= !(RegF[ALU_FLAG_CARRY]) ? EXECUTE1  : FETCH0;
-                        PC            <= !(RegF[ALU_FLAG_CARRY]) ? PC        : PC + 2;
-                      end
-                      2'b11: //  C
-                      begin
-                        currentState  <= (RegF[ALU_FLAG_CARRY]) ? EXECUTE1   : FETCH0;
-                        PC            <= (RegF[ALU_FLAG_CARRY]) ? PC         : PC + 2;
-                      end
-                    endcase
-                  end
-                  EXECUTE1:
-                  begin
-                    currentInstruction  <= 8'b11000011;// Set to normal JP a16
-                    currentState        <= EXECUTE0;
-                  end
+                case (currentState)
+                EXECUTE0:
+                begin
+                  case (InsY[1:0])
+                    2'b00:  // NZ
+                    begin
+                      currentState  <= !(RegF[ALU_FLAG_ZERO]) ? EXECUTE1   : FETCH0;
+                      PC            <= !(RegF[ALU_FLAG_ZERO]) ? PC         : PC + 2;
+                    end
+                    2'b01: //  Z
+                    begin
+                      currentState  <= (RegF[ALU_FLAG_ZERO])  ? EXECUTE1   : FETCH0;
+                      PC            <= (RegF[ALU_FLAG_ZERO])  ? PC         : PC + 2;
+                    end
+                    2'b10: // NC
+                    begin
+                      currentState  <= !(RegF[ALU_FLAG_CARRY]) ? EXECUTE1  : FETCH0;
+                      PC            <= !(RegF[ALU_FLAG_CARRY]) ? PC        : PC + 2;
+                    end
+                    2'b11: //  C
+                    begin
+                      currentState  <= (RegF[ALU_FLAG_CARRY]) ? EXECUTE1   : FETCH0;
+                      PC            <= (RegF[ALU_FLAG_CARRY]) ? PC         : PC + 2;
+                    end
                   endcase
+                end
+                EXECUTE1:
+                begin
+                  currentInstruction  <= 8'b11000011;// Set to normal JP a16
+                  currentState        <= EXECUTE0;
+                end
+                endcase
               end
               else if (InsY[0] == 0) // LD [0xFF00 + C], A or LD A, [0xFF00 + C]
               begin
@@ -1225,6 +1225,41 @@ begin
                   currentState    <= TRAP; // TODO
                 default: // TRAP UNDEFINED
                   currentState    <= TRAP;
+              endcase
+            end
+            3'b100: // CALL {NZ, Z, NC, C}
+            begin
+              case (currentState)
+              EXECUTE0:
+              begin
+                case (InsY[1:0])
+                  2'b00:  // NZ
+                  begin
+                    currentState  <= !(RegF[ALU_FLAG_ZERO]) ? EXECUTE1   : FETCH0;
+                    PC            <= !(RegF[ALU_FLAG_ZERO]) ? PC         : PC + 2;
+                  end
+                  2'b01: //  Z
+                  begin
+                    currentState  <= (RegF[ALU_FLAG_ZERO])  ? EXECUTE1   : FETCH0;
+                    PC            <= (RegF[ALU_FLAG_ZERO])  ? PC         : PC + 2;
+                  end
+                  2'b10: // NC
+                  begin
+                    currentState  <= !(RegF[ALU_FLAG_CARRY]) ? EXECUTE1  : FETCH0;
+                    PC            <= !(RegF[ALU_FLAG_CARRY]) ? PC        : PC + 2;
+                  end
+                  2'b11: //  C
+                  begin
+                    currentState  <= (RegF[ALU_FLAG_CARRY]) ? EXECUTE1   : FETCH0;
+                    PC            <= (RegF[ALU_FLAG_CARRY]) ? PC         : PC + 2;
+                  end
+                endcase
+              end
+              EXECUTE1:
+              begin
+                currentInstruction  <= 8'b11001101;// Set to normal CALL a16
+                currentState        <= EXECUTE0;
+              end
               endcase
             end
             3'b101:
