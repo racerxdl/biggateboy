@@ -29,6 +29,12 @@ module CPUTest;
   wire  [7:0]   dataOut;
   wire  [15:0]  address;
   wire          busWriteEnable;     // 1 => WRITE, 0 => READ
+  wire          halted;
+  wire          stopped;
+  wire  [7:0]   resetInterrupt;
+
+  reg   [7:0]   interruptsEnabled = 0;
+  reg   [7:0]   interruptsFired = 0;
 
   reg   [7:0]  memory [0:memorySize-1];
 
@@ -38,14 +44,23 @@ module CPUTest;
       dataIn <= 0;
     else
     begin
-      dataIn <= memory[address];
-      if (busWriteEnable) memory[address] <= dataOut;
+      if (address == 16'hFFFF) // Interrupts enabled register
+      begin
+        dataIn <= interruptsEnabled;
+        if (busWriteEnable) interruptsEnabled <= dataOut;
+      end
+      else
+      begin
+        dataIn <= memory[address];
+        if (busWriteEnable) memory[address] <= dataOut;
+      end
     end
   end
 
+  always @(*) if (resetInterrupt > 0) interruptsFired <= interruptsFired & ~(resetInterrupt);
 
   // Our device under test
-  CPU cpu(clk, reset, address, dataIn, dataOut, busWriteEnable);
+  CPU cpu(clk, reset, address, dataIn, dataOut, busWriteEnable, stopped, halted, interruptsEnabled, interruptsFired, resetInterrupt);
 
   initial begin
     $dumpfile("cpu_test.vcd");
@@ -640,6 +655,15 @@ module CPUTest;
     end
     if (cpu.RegA[7:0] != 8'h02) $error("Expected register A to be %02x got %02x", 8'h02, cpu.RegA[7:0]);
     if (cpu.regBank.registers[REGNUM_B] != 8'h00) $error("Expected register B to be %02x got %02x", 8'h00, cpu.regBank.registers[REGNUM_B]);
+
+    while (cpu.PC != 16'h7E)
+    begin
+    #10
+    clk = 1;
+    #10
+    clk = 0;
+    end
+    if (!cpu.HandleInterrupts) $error("Expected interrupts to be enabled");
 
     // ----------------------------//
     // // Run GB Bios

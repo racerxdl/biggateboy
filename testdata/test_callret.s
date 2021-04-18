@@ -76,3 +76,17 @@ cont1:
   NOP
   NOP
   NOP
+  JR cont2
+
+routine1:
+  LD A, $01
+  RETI
+  STOP
+
+cont2:
+  NOP
+  NOP
+  DI
+  CALL routine1
+  NOP
+  NOP

@@ -37,3 +37,5 @@
 21. Run until PC == 0x6D
     * Expect A == 0x02
     * Expect B == 0x00
+22. Run until PC == 0x7E
+    * Expect Interrupts Enabled

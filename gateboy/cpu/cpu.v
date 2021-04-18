@@ -4,7 +4,12 @@ module CPU (
   output reg  [15:0]  memAddress,
   input  wire [7:0]   memDataR,
   output reg  [7:0]   memDataW,
-  output reg          RW            // R/W (0 == Read, 1 == Write)
+  output reg          RW,            // R/W (0 == Read, 1 == Write)
+  output reg          stopped,
+  output reg          halted,
+  input  wire [7:0]   interruptsEnabled, // Memory Mapped at 0xFFFF
+  input  wire [7:0]   interruptsFired,
+  output reg  [7:0]   resetInterrupt
 );
 
 // Synchronous ALU
@@ -23,6 +28,17 @@ wire  [15:0]    MemAddressPlusOne   = memAddress + 1;
 wire  [15:0]    MemAddressMinusOne  = memAddress - 1;
 
 ALUSync alu(clk, reset, AluOp, AluX, AluY, AluEnable, AluWriteA, AluWriteF, RegA, AluO, RegF);
+
+// Interrupts
+localparam IntVblank  = 8'h01;
+localparam IntLcdstat = 8'h02;
+localparam IntTimer   = 8'h04;
+localparam IntSerial  = 8'h08;
+localparam IntJoypad  = 8'h10;
+localparam AllInts    = IntVblank | IntLcdstat | IntTimer | IntTimer | IntSerial | IntJoypad;
+reg HandleInterrupts = 0;
+wire [7:0] interruptsToHandle = (interruptsEnabled & interruptsFired) & AllInts;
+
 
 // Register Bank
 reg   [2:0]     RegNum          = 0;
@@ -60,16 +76,19 @@ reg   [15:0]      SP = 0;
 wire  [15:0]    SPPlusOne   = SP + 1;
 wire  [15:0]    SPMinusOne  = SP - 1;
 
-localparam FETCH0   = 4'h0;
-localparam FETCH1   = 4'h1;
-localparam DECODE   = 4'h2;
-localparam EXECUTE0 = 4'h3;
-localparam EXECUTE1 = 4'h4;
-localparam EXECUTE2 = 4'h5;
-localparam EXECUTE3 = 4'h6;
-localparam EXECUTE4 = 4'h7;
-localparam EXECUTE5 = 4'h8;
-localparam TRAP     = EXECUTE5 + 1;
+localparam FETCH0     = 8'h00;
+localparam FETCH1     = 8'h01;
+localparam DECODE     = 8'h02;
+localparam EXECUTE0   = 8'h03;
+localparam EXECUTE1   = 8'h04;
+localparam EXECUTE2   = 8'h05;
+localparam EXECUTE3   = 8'h06;
+localparam EXECUTE4   = 8'h07;
+localparam EXECUTE5   = 8'h08;
+localparam HALTED0    = 8'h09;
+localparam HALTED1    = 8'h10;
+localparam INTERRUPT0 = HALTED1 + 1;
+localparam TRAP       = HALTED1 + 2;
 
 localparam REGNUM_B = 4'h0;
 localparam REGNUM_C = 4'h1;
@@ -118,9 +137,9 @@ localparam ALU_FLAG_SUB       = 2; // N
 localparam ALU_FLAG_HALFCARRY = 1; // H
 localparam ALU_FLAG_CARRY     = 0; // C
 
-reg [7:0] currentState = FETCH0;
-reg [7:0] currentInstruction = 8'h00;
-reg [7:0] currentCBInstruction = 8'h00;
+reg [7:0] currentState          = FETCH0;
+reg [7:0] currentInstruction    = 8'h00;
+reg [7:0] currentCBInstruction  = 8'h00;
 
 wire [1:0] InsX = currentInstruction[7:6];
 wire [2:0] InsY = currentInstruction[5:3];
@@ -162,6 +181,11 @@ begin
     currentState          <= FETCH0;
     currentInstruction    <= 0;
     currentCBInstruction  <= 0;
+
+    // Interrupts
+    HandleInterrupts      <= 0;
+    stopped               <= 0;
+    halted                <= 0;
   end
   else
   begin
@@ -169,12 +193,50 @@ begin
     begin
       memAddress        <= PC;
       RW                <= 0;
-      currentState      <= FETCH1;
       RegWriteEnable8   <= 0;
       RegWriteEnable16  <= 0;
       AluWriteA         <= 0;
       AluWriteF         <= 0;
       AluEnable         <= 0;
+      if (HandleInterrupts && (interruptsToHandle > 0))
+        currentState      <= INTERRUPT0;
+      else
+        currentState      <= FETCH1;
+    end
+    else if (currentState == INTERRUPT0)
+    begin
+      RegNum              <= REGNUM_Z;
+      RegWriteEnable16    <= 1;
+      HandleInterrupts    <= 0;
+      currentState        <= EXECUTE3;    // CALL stage after loading a16, so we safely call that WZ address
+      currentInstruction  <= 8'b11001101; // CALL a16
+
+      // Priority handling
+      if ((interruptsToHandle & IntVblank) > 0)
+      begin
+        resetInterrupt <= IntVblank;
+        RegBankIn16    <= 16'h0040;
+      end
+      else if ((interruptsToHandle & IntLcdstat) > 0)
+      begin
+        resetInterrupt <= IntLcdstat;
+        RegBankIn16    <= 16'h0048;
+      end
+      else if ((interruptsToHandle & IntTimer) > 0)
+      begin
+        resetInterrupt <= IntTimer;
+        RegBankIn16    <= 16'h0050;
+      end
+      else if ((interruptsToHandle & IntSerial) > 0)
+      begin
+        resetInterrupt <= IntSerial;
+        RegBankIn16    <= 16'h0058;
+      end
+      else if ((interruptsToHandle & IntJoypad) > 0)
+      begin
+        resetInterrupt <= IntJoypad;
+        RegBankIn16    <= 16'h0060;
+      end
     end
     else if (currentState == FETCH1)
     begin
@@ -234,7 +296,10 @@ begin
                   endcase
                 end
                 3'b010: // STOP
-                  currentState <= TRAP; // TODO
+                begin
+                  stopped       <= 1;
+                  currentState  <= HALTED0;
+                end
                 3'b011: // JR s8
                   case (currentState)
                     EXECUTE0:
@@ -603,7 +668,16 @@ begin
         begin
           if (InsY == 3'b110 && InsZ == 3'b110) // HALT
           begin
-            currentState  <= TRAP;
+            if (HandleInterrupts)
+            begin
+              halted        <= 1;
+              currentState  <= HALTED0;
+            end
+            else
+            begin
+              PC            <= PC + 1;   // HALT Bug
+              currentState  <= FETCH0;
+            end
           end
           else if (InsY == InsZ) // LD X, X
           begin
@@ -960,7 +1034,7 @@ begin
                   case (currentState)
                   EXECUTE0:
                   begin
-                    // TODO: Enable Interrupts
+                    HandleInterrupts    <= 1;
                     currentInstruction  <= 8'b11001001;// Set to normal RET
                     currentState        <= EXECUTE0;
                   end
@@ -1220,9 +1294,15 @@ begin
                   endcase
                   end
                 3'b110: // DI
-                  currentState    <= TRAP; // TODO
+                begin
+                  HandleInterrupts  <= 0;
+                  currentState      <= FETCH0;
+                end
                 3'b111: // EI
-                  currentState    <= TRAP; // TODO
+                begin
+                  HandleInterrupts  <= 1;
+                  currentState      <= FETCH0;
+                end
                 default: // TRAP UNDEFINED
                   currentState    <= TRAP;
               endcase
@@ -1308,25 +1388,33 @@ begin
                   end
                   EXECUTE1:
                   begin
+                    PC              <= MemAddressPlusOne;
+                    currentState    <= EXECUTE2; // Idle state
+                  end
+                  EXECUTE2:
+                  begin
                     // Save to Z
                     RegNum          <= REGNUM_W;
                     RegBankIn       <= memDataR;
                     // Update PC
-                    PC              <= MemAddressPlusOne;
+                    currentState    <= EXECUTE3;
+                  end
+                  EXECUTE3: // Stage SAFE TO CALL FROM OTHER STAGE - expect destiny at WZ
+                  begin
+                    // Disable Z write
+                    RegWriteEnable8   <= 0;
+                    RegWriteEnable16  <= 0; // From Interrupts
 
                     // Set Stack Pointer and address to SP-1 and write
                     SP              <= SPMinusOne;
                     memAddress      <= SPMinusOne;
                     RW              <= 1;
-                    memDataW        <= PC[7:0] + 1;
-
-                    currentState    <= EXECUTE2;
+                    memDataW        <= PC[7:0];
+                    currentState    <= EXECUTE4;
                   end
                   // Save PC into [SP], set PC
-                  EXECUTE2:
+                  EXECUTE4:
                   begin
-                    // Disable Z write
-                    RegWriteEnable8 <= 0;
                     // Set dataOut to upper byte of PC and keep WriteEnable
                     memAddress      <= SPMinusOne;
                     memDataW        <= PC[15:7];
