@@ -1,0 +1,57 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Wed Apr 21 05:34:29 2021
+[*]
+[dumpfile] "/media/ELTN/Lucas/Works/biggateboy/build/teskeslab_biggateboy_gameboy_0.0.1/sim-icarus/top_tb.vcd"
+[dumpfile_mtime] "Wed Apr 21 05:33:41 2021"
+[dumpfile_size] 3633
+[savefile] "/media/ELTN/Lucas/Works/biggateboy/top.gtkw"
+[timestart] 0
+[size] 1920 1031
+[pos] -1 -1
+*-10.000000 965 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] GameboyTest.
+[treeopen] GameboyTest.gb.
+[sst_width] 200
+[signals_width] 289
+[sst_expanded] 1
+[sst_vpaned_height] 316
+@28
+GameboyTest.clk
+GameboyTest.rst
+@200
+-
+@28
+GameboyTest.gb.clkDiv.cgbMode
++{FPGA Clock} GameboyTest.gb.clkDiv.sclk
++{Gameboy Clock} GameboyTest.gb.clkDiv.gclk
+@200
+-
+-CPU
+@22
++{PC} GameboyTest.gb.cpu.PC[15:0]
++{SP} GameboyTest.gb.cpu.SP[15:0]
+@4022
+^>1 /media/ELTN/Lucas/Works/biggateboy/gtkwave/instruction.py
++{Instruction} GameboyTest.gb.cpu.currentInstruction[7:0]
+^>2 /media/ELTN/Lucas/Works/biggateboy/gtkwave/state_name.py
++{State} GameboyTest.gb.cpu.currentState[7:0]
+@28
+GameboyTest.gb.cpuHalted
+GameboyTest.gb.cpuStopped
+@200
+-
+-BUS
+@23
++{CPUAddr} GameboyTest.gb.cpuAddress[15:0]
+@28
++{CPURW} GameboyTest.gb.cpuBusWriteEnable
+@22
++{CPUIn} GameboyTest.gb.cpuDataIn[7:0]
++{CPUOut} GameboyTest.gb.cpuDataOut[7:0]
+@28
++{VideoRamBank} GameboyTest.gb.vRamBank
+@24
++{WorkRamBank} GameboyTest.gb.wRamBank[2:0]
+[pattern_trace] 1
+[pattern_trace] 0

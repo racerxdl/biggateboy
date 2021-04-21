@@ -1,0 +1,16 @@
+CAPI=2:
+name: teskeslab:biggateboy:iobase:0.0.1
+description: Gameboy I/O Register number and constants
+
+filesets:
+  rtl:
+    files:
+      - ./gateboy/ioregisters.v: {is_include_file: true}
+    file_type: verilogSource
+
+targets:
+  # The "default" target is special in FuseSoC and used in dependencies.
+  # The "&default" is a YAML anchor referenced later.
+  default: &default
+    filesets:
+      - rtl

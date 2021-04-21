@@ -1,0 +1,45 @@
+CAPI=2:
+name: teskeslab:biggateboy:gameboy:0.0.1
+description: Gameboy ALU
+
+filesets:
+  rtl:
+    depend:
+      - teskeslab:biggateboy:cpu
+      - teskeslab:biggateboy:clockdivider
+      - teskeslab:biggateboy:iobase
+    files:
+      - ./top.v
+      - ./testdata/gbbios.smem: {is_include_file: true, copyto: testdata/gbbios.smem}
+
+    file_type: verilogSource
+
+  tb:
+    files:
+      - ./top_tb.v
+    file_type: verilogSource
+
+targets:
+  # The "default" target is special in FuseSoC and used in dependencies.
+  # The "&default" is a YAML anchor referenced later.
+  default: &default
+    filesets:
+      - rtl
+    toplevel: Gameboy
+
+  # The "sim" target simulates the design. (It could have any name.)
+  sim:
+    # Copy all key/value pairs from the "default" target.
+    <<: *default
+    description: Simulate the design
+    default_tool: icarus
+    filesets_append:
+      - tb
+    toplevel: GameboyTest
+    tools:
+      icarus:
+        iverilog_options:
+          - -g2012 # Use SystemVerilog-2012
+      modelsim:
+        vlog_options:
+          - -timescale=1ns/1ns

@@ -1,0 +1,17 @@
+CAPI=2:
+name: teskeslab:biggateboy:clockdivider:0.0.1
+description: Gameboy Clock Divider
+
+filesets:
+  rtl:
+    files:
+      - ./gateboy/clock_divider.v
+    file_type: verilogSource
+
+targets:
+  # The "default" target is special in FuseSoC and used in dependencies.
+  # The "&default" is a YAML anchor referenced later.
+  default: &default
+    filesets:
+      - rtl
+    toplevel: CPU

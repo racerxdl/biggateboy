@@ -24,12 +24,12 @@ end
 
 reg  [dividerWidth-1:0] divider = 0;
 
-wire genClk = cgbMode ? divider <  cgbDividerMax : divider <  dividerMax;
+wire genClk = cgbMode ? divider <=  cgbDividerMax / 2 : divider <=  dividerMax / 2;
 wire max    = cgbMode ? divider == cgbDividerMax : divider == dividerMax;
 
 always @(posedge sclk)
 begin
-  if(reset || max)
+  if(rst | max)
     divider <= 0;
   else
     divider <= divider + 1;
