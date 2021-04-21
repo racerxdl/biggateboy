@@ -11,13 +11,18 @@ module RegisterBankTest;
   reg           reset = 0;
   reg   [7:0]   dataIn;
   wire  [7:0]   dataOut;
+
+  reg   [15:0]  dataIn16;
   wire  [15:0]  dataOut16;
+
   reg   [2:0]   regNum;
+
   reg           writeEnable;     // 1 => WRITE, 0 => READ
+  reg           writeEnable16;     // 1 => WRITE, 0 => READ
   wire  [15:0]  stackPointer;
 
   // Our device under test
-  RegisterBank dut(clk, reset, dataIn, dataOut, dataOut16, stackPointer, regNum, writeEnable);
+  RegisterBank dut(clk, reset, regNum, dataIn, dataOut, writeEnable, dataIn16, dataOut16, writeEnable16);
 
   initial begin
     $dumpfile("register_bank_tb.vcd");
