@@ -1,10 +1,10 @@
-module top (
+module Gameboy (
   input  wire clk,
   input  wire rst,
   output reg  led
 );
 
-`include "gateboy/ioregisters.v"
+`include "ioregisters.v"
 
 reg cgbMode = 0;
 reg reset = 1;
@@ -19,17 +19,18 @@ ClockDivider #(
   .gclk(gameboyClock)
 );
 
-reg [3:0] reset_counter = 15; // self-reset
-reg reset  = 1;               // global reset
-reg extrst = 1;               // external reset default value (sampled at startup)
+// reg [3:0] reset_counter = 15; // self-reset
+// reg extrst = 1;               // external reset default value (sampled at startup)
 
-always @(posedge clk)
-begin
-  reset_counter <= reset_counter ? reset_counter-1 : // while(reset_counter--);
-                   extrst!=rst ? 13 : 0; // rst != extrst -> restart counter
-  reset <= reset_counter ? 1 : 0; // while not zero, reset = 1, after that use extrst
-  extrst <= (reset_counter==14) ? rst : extrst; // sample the reset button and store the value when not in reset
-end
+// always @(posedge clk)
+// begin
+//   reset_counter <= reset_counter ? reset_counter-1 : // while(reset_counter--);
+//                    extrst!=rst ? 13 : 0; // rst != extrst -> restart counter
+//   reset <= reset_counter ? 1 : 0; // while not zero, reset = 1, after that use extrst
+//   extrst <= (reset_counter==14) ? rst : extrst; // sample the reset button and store the value when not in reset
+// end
+
+always @(*) reset <= rst;
 
 reg [7:0] gbBios      [0:255];
 reg [7:0] vRam        [0:16383];
@@ -70,14 +71,14 @@ initial begin
   $readmemh("testdata/gbbios.smem", gbBios);
 end
 
-always @(posedge clk)
+always @(posedge gameboyClock)
 begin
   if (reset)
   begin
     cgbMode             <= 0;
     vRamBank            <= 0;
     wRamBank            <= 1;
-    cpuDataIn           <= 0;
+    cpuDataIn           <= gbBios[0];
     interruptsEnabled   <= 0;
     interruptsFired     <= 0;
 
@@ -110,18 +111,18 @@ begin
     end
     else if (cpuAddress <= 16'hCFFF) // Work Ram Bank 0
     begin
-      cpuDataIn <= wRam[address[11:0]];
-      if (busWriteEnable) wRam[address[11:0]] <= cpuDataOut;
+      cpuDataIn <= wRam[cpuAddress[11:0]];
+      if (cpuBusWriteEnable) wRam[cpuAddress[11:0]] <= cpuDataOut;
     end
     else if (cpuAddress <= 16'hDFFF) // Work Ram Bank N
     begin
-      cpuDataIn <= wRam[{wRamBank, address[11:0]}];
-      if (busWriteEnable) wRam[{wRamBank, address[11:0]}] <= cpuDataOut;
+      cpuDataIn <= wRam[{wRamBank, cpuAddress[11:0]}];
+      if (cpuBusWriteEnable) wRam[{wRamBank, cpuAddress[11:0]}] <= cpuDataOut;
     end
     else if (cpuAddress <= 16'hFDFF) // ECHO RAM, same as C000~DDFF
     begin
-      cpuDataIn <= wRam[address[11:0]];
-      if (busWriteEnable) wRam[address[11:0]] <= cpuDataOut;
+      cpuDataIn <= wRam[cpuAddress[11:0]];
+      if (cpuBusWriteEnable) wRam[cpuAddress[11:0]] <= cpuDataOut;
     end
     else if (cpuAddress <= 16'hFE9F) // Sprite attribute table
     begin
@@ -138,14 +139,14 @@ begin
     else if (cpuAddress == 16'hFFFF) // Interrupts Enabled Register
     begin
       cpuDataIn <= interruptsEnabled;
-      if (busWriteEnable)
+      if (cpuBusWriteEnable)
         interruptsEnabled <= cpuDataOut;
     end
     else if (cpuAddress >= 16'hFF80 && cpuAddress <= 16'hFFFE) // High Ram
     begin
-      cpuDataIn <= hRam[address[6:0]];
-      if (busWriteEnable)
-        hRam[address[6:0]] <= cpuDataOut;
+      cpuDataIn <= hRam[cpuAddress[6:0]];
+      if (cpuBusWriteEnable)
+        hRam[cpuAddress[6:0]] <= cpuDataOut;
     end
   end
 end
