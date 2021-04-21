@@ -99,43 +99,7 @@ localparam REGNUM_L = 4'h5;
 localparam REGNUM_W = 4'h6;
 localparam REGNUM_Z = 4'h7;
 
-
-// ALU OPS
-localparam ALU_ADD       = 8'h00;
-localparam ALU_ADC       = 8'h01;
-localparam ALU_SUB       = 8'h02;
-localparam ALU_SBC       = 8'h03;
-localparam ALU_AND       = 8'h04;
-localparam ALU_XOR       = 8'h05;
-localparam ALU_OR        = 8'h06;
-localparam ALU_CP        = 8'h07;
-//RLCA  RRCA  RLA RRA DAA CPL SCF CCF
-localparam ALU_RLC       = 8'h10;
-localparam ALU_RRC       = 8'h11;
-localparam ALU_RL        = 8'h12;
-localparam ALU_RR        = 8'h13;
-localparam ALU_DAA       = 8'h14;
-localparam ALU_CPL       = 8'h15;
-localparam ALU_SCF       = 8'h16;
-localparam ALU_CCF       = 8'h17;
-// From Prefix CB
-localparam ALU_CB_BASE   = 8'h20;
-localparam ALU_SLA       = 8'h24;
-localparam ALU_SRA       = 8'h25;
-localparam ALU_SRL       = 8'h26;
-localparam ALU_SWAP      = 8'h27;
-localparam ALU_BIT       = 8'h30;
-localparam ALU_RES       = 8'h40;
-localparam ALU_SET       = 8'h50;
-
-// 16 bit operations
-localparam ALU_ADD16     = 8'h60;
-
-
-localparam ALU_FLAG_ZERO      = 3; // Z
-localparam ALU_FLAG_SUB       = 2; // N
-localparam ALU_FLAG_HALFCARRY = 1; // H
-localparam ALU_FLAG_CARRY     = 0; // C
+`include "aluops.v"
 
 reg [7:0] currentState          = FETCH0;
 reg [7:0] currentInstruction    = 8'h00;

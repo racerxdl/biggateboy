@@ -10,7 +10,8 @@ syn.ys
 *.dsn.result
 *.vcd
 artifacts
-testdata/*.mem
 .idea
 *.gb
 *.o
+fusesoc.conf
+build

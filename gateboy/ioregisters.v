@@ -1,0 +1,1 @@
+parameter IOREG_BIOSENABLED = 7'h50;

@@ -1,0 +1,43 @@
+CAPI=2:
+name: teskeslab:biggateboy:alu:0.0.1
+description: Gameboy ALU
+
+filesets:
+  rtl:
+    files:
+      - ./gateboy/cpu/alu.v
+      - ./gateboy/cpu/alu_sync.v
+      - ./gateboy/aluops.v: {is_include_file: true}
+
+    file_type: verilogSource
+
+  tb:
+    files:
+      - ./gateboy/cpu/alu_tb.v
+      - ./testdata/alu_tests.mem: {is_include_file: true, copyto: testdata/alu_tests.mem}
+    file_type: verilogSource
+
+targets:
+  # The "default" target is special in FuseSoC and used in dependencies.
+  # The "&default" is a YAML anchor referenced later.
+  default: &default
+    filesets:
+      - rtl
+    toplevel: CPU
+
+  # The "sim" target simulates the design. (It could have any name.)
+  sim:
+    # Copy all key/value pairs from the "default" target.
+    <<: *default
+    description: Simulate the design
+    default_tool: icarus
+    filesets_append:
+      - tb
+    toplevel: ALUTest
+    tools:
+      icarus:
+        iverilog_options:
+          - -g2012 # Use SystemVerilog-2012
+      modelsim:
+        vlog_options:
+          - -timescale=1ns/1ns
