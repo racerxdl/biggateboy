@@ -1,0 +1,10 @@
+splash_disable on
+use_nonprop_fonts 1
+use_big_fonts 0
+use_pango_fonts on
+fontname_signals Fira Code 14
+fontname_waves Fira Code 14
+fontname_logfile Fira Code 14
+editor "subl %s"
+enable_horiz_grid 0
+use_fat_lines 0

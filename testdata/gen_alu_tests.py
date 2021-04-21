@@ -7,24 +7,34 @@ FlagHalfCarry = 1 << 1
 FlagCarry     = 1 << 0
 
 # ALU Operations
-OpOR    = 0x00
-OpAND   = 0x01
-OpXOR   = 0x02
-OpCPL   = 0x03
-OpADD   = 0x04
-OpADC   = 0x05
-OpSUB   = 0x06
-OpSBC   = 0x07
-OpRLC   = 0x08
-OpRL    = 0x09
-OpRRC   = 0x0a
-OpRR    = 0x0b
-OpSLA   = 0x0c
-OpSRA   = 0x0d
-OpSRL   = 0x0e
-OpSWAP  = 0x0f
-OpDAA   = 0x10
-OpADD16 = 0x11
+OpADD   = 0x00
+OpADC   = 0x01
+OpSUB   = 0x02
+OpSBC   = 0x03
+OpAND   = 0x04
+OpXOR   = 0x05
+OpOR    = 0x06
+OpCP    = 0x07
+
+OpRLC   = 0x10
+OpRRC   = 0x11
+OpRL    = 0x12
+OpRR    = 0x13
+OpDAA   = 0x14
+OpCPL   = 0x15
+OpSCF   = 0x16
+OpCCF   = 0x17
+
+OpSLA   = 0x24
+OpSRA   = 0x25
+OpSRL   = 0x26
+OpSWAP  = 0x27
+
+OpBIT   = 0x30
+OpRES   = 0x40
+OpSET   = 0x50
+
+OpADD16 = 0x60
 
 def Test(op, x=0, y=0, f=0, o=0, fresult=0):
   return {"op":op,"x": x,"y": y,"f":f,"o": o,"fresult" : fresult}
@@ -68,19 +78,36 @@ ALUTests = [
   Test(OpOR,  x=65280,   y=    0, f=   0, o=     0,  fresult=FlagZero),                              # [ 26]
 ]
 
+
+for i in range(8):
+  ALUTests.append(  Test(OpBIT + i, x=  255,   y=    0, f=   0, o=   255,  fresult=FlagHalfCarry))
+  ALUTests.append(  Test(OpBIT + i, x=    0,   y=    0, f=   0, o=     0,  fresult=FlagZero|FlagHalfCarry))
+  if i % 2 == 0:
+    ALUTests.append(Test(OpBIT + i, x=  170,   y=    0, f=   0, o=     170,  fresult=FlagZero|FlagHalfCarry))
+  else:
+    ALUTests.append(Test(OpBIT + i, x=  170,   y=    0, f=   0, o=     170,  fresult=FlagHalfCarry))
+
+for i in range(8):
+  result = 0xFF & (~(1 << i))
+  ALUTests.append(  Test(OpRES + i, x=  255,   y=    0, f=   0, o=   result,  fresult=0))
+
+for i in range(8):
+  result = 1 << i
+  ALUTests.append(  Test(OpSET + i, x=  0,   y=    0, f=   0, o=   result,  fresult=0))
+
+
 def PackTest(op, x, y, f, o, fresult):
   '''
     OP(5), X(16), Y(16), F(4), O(16), FResult(4), Padding(3) == Total(64)
   '''
   # This doesnt need to be fast, so fuck it
   packedString = ""
-  packedString += format(op     , "05b" ) # Operation   [  5 bits ]
+  packedString += format(op     , "08b" ) # Operation   [  8 bits ]
   packedString += format(x      , "016b") # Operator X  [ 16 bits ]
   packedString += format(y      , "016b") # Operator Y  [ 16 bits ]
   packedString += format(f      , "04b" ) # Input Flag  [  4 bits ]
   packedString += format(o      , "016b") # Result      [ 16 bits ]
   packedString += format(fresult, "04b" ) # Result Flag [  4 bits ]
-  packedString += format(0      , "03b" ) # Padding     [  3 bits ]
 
   return packedString.encode("ascii")
 

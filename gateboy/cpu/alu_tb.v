@@ -3,15 +3,15 @@
 module ALUTest;
   // Simulation helpers
   event terminateSimulation;
-  reg [7:0] OpError     [17:0];
-  reg [7:0] OpTotal     [17:0];
+  reg [7:0] OpError     [128:0];
+  reg [7:0] OpTotal     [128:0];
   integer seed = 0; // Random number seed
   integer i;
 
-  localparam numTests = 27; // Check testdata/gen_alu_tests.py
+  localparam numTests = 67; // Check testdata/gen_alu_tests.py
 
   // ALU Registers
-  reg [4:0] op;
+  reg [7:0] op;
   reg [15:0] X;         // First Operand
   reg [15:0] Y;         // Second Operand
   reg [3:0]  F;         // Flag Register
@@ -19,18 +19,17 @@ module ALUTest;
   wire [3:0]  FResult;  // Result Flag
   wire [15:0] O;        // Operation Result
 
-  // OP(5), X(16), Y(16), F(4), O(16), FResult(4), Padding(3) == Total(64)
+  // OP(8), X(16), Y(16), F(4), O(16), FResult(4) == Total(64)
   reg [63:0] testCases [0:numTests-1];
 
   // Test regs
-  reg [4:0]   tOP;
+  reg [7:0]   tOP;
   reg [15:0]  tX;
   reg [15:0]  tY;
   reg [3:0]   tF;
 
   reg [3:0]  tFResult;
   reg [15:0] tO;
-  reg [2:0]  tPad;
 
   reg currentOpErr;
 
@@ -44,31 +43,45 @@ module ALUTest;
     $dumpvars;
     // Load tests
     $readmemb("testdata/alu_tests.mem", testCases);
-
     // Reset errors
-    OpError[alu.OR]     = 0; OpTotal[alu.OR]     = 0;
-    OpError[alu.AND]    = 0; OpTotal[alu.AND]    = 0;
-    OpError[alu.XOR]    = 0; OpTotal[alu.XOR]    = 0;
-    OpError[alu.CPL]    = 0; OpTotal[alu.CPL]    = 0;
     OpError[alu.ADD]    = 0; OpTotal[alu.ADD]    = 0;
     OpError[alu.ADC]    = 0; OpTotal[alu.ADC]    = 0;
     OpError[alu.SUB]    = 0; OpTotal[alu.SUB]    = 0;
     OpError[alu.SBC]    = 0; OpTotal[alu.SBC]    = 0;
+    OpError[alu.AND]    = 0; OpTotal[alu.AND]    = 0;
+    OpError[alu.XOR]    = 0; OpTotal[alu.XOR]    = 0;
+    OpError[alu.OR]     = 0; OpTotal[alu.OR]     = 0;
+    OpError[alu.CP]     = 0; OpTotal[alu.CP]     = 0;
+
     OpError[alu.RLC]    = 0; OpTotal[alu.RLC]    = 0;
-    OpError[alu.RL]     = 0; OpTotal[alu.RL]     = 0;
     OpError[alu.RRC]    = 0; OpTotal[alu.RRC]    = 0;
+    OpError[alu.RL]     = 0; OpTotal[alu.RL]     = 0;
     OpError[alu.RR]     = 0; OpTotal[alu.RR]     = 0;
+    OpError[alu.DAA]    = 0; OpTotal[alu.DAA]    = 0;
+    OpError[alu.CPL]    = 0; OpTotal[alu.CPL]    = 0;
+    OpError[alu.SCF]    = 0; OpTotal[alu.SCF]    = 0;
+    OpError[alu.CCF]    = 0; OpTotal[alu.CCF]    = 0;
+
     OpError[alu.SLA]    = 0; OpTotal[alu.SLA]    = 0;
     OpError[alu.SRA]    = 0; OpTotal[alu.SRA]    = 0;
     OpError[alu.SRL]    = 0; OpTotal[alu.SRL]    = 0;
     OpError[alu.SWAP]   = 0; OpTotal[alu.SWAP]   = 0;
-    OpError[alu.DAA]    = 0; OpTotal[alu.DAA]    = 0;
     OpError[alu.ADD16]  = 0; OpTotal[alu.ADD16]  = 0;
+
+    for (i = 0; i < 8; i++)
+    begin
+      OpError[alu.BIT + i] = 0;
+      OpTotal[alu.BIT + i] = 0;
+      OpError[alu.RES + i] = 0;
+      OpTotal[alu.RES + i] = 0;
+      OpError[alu.SET + i] = 0;
+      OpTotal[alu.SET + i] = 0;
+    end
 
     $display("\033[1;37m## Running tests\033[0m");
     for (i = 0; i < numTests; i++)
     begin
-      {tOP, tX, tY, tF, tO, tFResult, tPad} = testCases[i];
+      {tOP, tX, tY, tF, tO, tFResult} = testCases[i];
       #1
       $display("\033[1;34m  -- Running test %d: %x\033[0m", i, testCases[i]);
       F  = tF;
@@ -118,6 +131,28 @@ module ALUTest;
     if (OpError[alu.SWAP]  == 0) $display("| \033[1;32mALU  SWAP   ==   OK   [%d    /  %d  ]\033[0m |", OpError[alu.SWAP ], OpTotal[alu.SWAP ]); else $display("| \033[1;31mALU  SWAP   ==  NOK   [%d    /  %d  ]\033[0m |", OpError[alu.SWAP ], OpTotal[alu.SWAP ]);
     if (OpError[alu.DAA]   == 0) $display("| \033[1;32mALU  DAA    ==   OK   [%d    /  %d  ]\033[0m |", OpError[alu.DAA  ], OpTotal[alu.DAA  ]); else $display("| \033[1;31mALU  DAA    ==  NOK   [%d    /  %d  ]\033[0m |", OpError[alu.DAA  ], OpTotal[alu.DAA  ]);
     if (OpError[alu.ADD16] == 0) $display("| \033[1;32mALU  ADD16  ==   OK   [%d    /  %d  ]\033[0m |", OpError[alu.ADD16], OpTotal[alu.ADD16]); else $display("| \033[1;31mALU  ADD16  ==  NOK   [%d    /  %d  ]\033[0m |", OpError[alu.ADD16], OpTotal[alu.ADD16]);
+
+    for (i = 0; i < 8; i++)
+    begin
+      if (OpError[alu.BIT + i] == 0)
+        $display("| \033[1;32mALU  BIT%01d   ==   OK   [%d    /  %d  ]\033[0m |", i, OpError[alu.BIT + i], OpTotal[alu.BIT + i]);
+      else
+        $display("| \033[1;31mALU  BIT%01d   ==  NOK   [%d    /  %d  ]\033[0m |", i, OpError[alu.BIT + i], OpTotal[alu.BIT + i]);
+    end
+    for (i = 0; i < 8; i++)
+    begin
+      if (OpError[alu.RES + i] == 0)
+        $display("| \033[1;32mALU  RES%01d   ==   OK   [%d    /  %d  ]\033[0m |", i, OpError[alu.RES + i], OpTotal[alu.RES + i]);
+      else
+        $display("| \033[1;31mALU  RES%01d   ==  NOK   [%d    /  %d  ]\033[0m |", i, OpError[alu.RES + i], OpTotal[alu.RES + i]);
+    end
+    for (i = 0; i < 8; i++)
+    begin
+      if (OpError[alu.SET + i] == 0)
+        $display("| \033[1;32mALU  SET%01d   ==   OK   [%d    /  %d  ]\033[0m |", i, OpError[alu.SET + i], OpTotal[alu.SET + i]);
+      else
+        $display("| \033[1;31mALU  SET%01d   ==  NOK   [%d    /  %d  ]\033[0m |", i, OpError[alu.SET + i], OpTotal[alu.SET + i]);
+    end
     $display("  ----------------------------------------\n");
     $display("\033[1;37m###################################################\033[0m");
     $finish;
