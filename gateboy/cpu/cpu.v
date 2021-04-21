@@ -472,7 +472,7 @@ begin
                 case (currentState)
                   EXECUTE0:
                   begin
-                    RegNum        <= InsY[3:1] << 1;
+                    RegNum        <= InsY[2:1] << 1;
                     AluY          <= InsY[0] ? $signed(-1) : 1;
                     AluOp         <= ALU_ADD16;
                     currentState  <= EXECUTE1;

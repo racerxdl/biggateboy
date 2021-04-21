@@ -122,8 +122,8 @@ begin
 end
 
 // Set the output flags
-reg [12:0] halfCarryHelper  = 0; // For ADD16 needs one nibble more than a byte
-reg [16:0] carryHelper      = 0; // Needs one bit more than a 16 bit var
+reg [12:0] halfCarryHelper; // For ADD16 needs one nibble more than a byte
+reg [16:0] carryHelper; // Needs one bit more than a 16 bit var
 
 always @(*)
 begin
@@ -164,10 +164,10 @@ begin
     ADC:
     begin
       // Calculate Half carry
-      halfCarryHelper <= ({1'b0, X[3:0]} + {1'b0, Y[3:0]} + InputCarry);
+      halfCarryHelper = ({1'b0, X[3:0]} + {1'b0, Y[3:0]} + InputCarry);
 
       // Calculate Carry
-      carryHelper     <= ({1'b0, X[7:0]} + {1'b0, Y[7:0]} + InputCarry);
+      carryHelper     = ({1'b0, X[7:0]} + {1'b0, Y[7:0]} + InputCarry);
 
       // Set flags
       fOut[FlagHalfCarryBit] = halfCarryHelper[4];
@@ -178,10 +178,10 @@ begin
     SUB:
     begin
       // Calculate Half carry
-      halfCarryHelper <= ({1'b0, X[3:0]} - {1'b0, Y[3:0]});
+      halfCarryHelper = ({1'b0, X[3:0]} - {1'b0, Y[3:0]});
 
       // Calculate Carry
-      carryHelper     <= ({1'b0, X[7:0]} - {1'b0, Y[7:0]});
+      carryHelper     = ({1'b0, X[7:0]} - {1'b0, Y[7:0]});
 
       // Set flags
       fOut[FlagHalfCarryBit] = halfCarryHelper[4];
@@ -192,10 +192,10 @@ begin
     SBC:
     begin
       // Calculate Half carry
-      halfCarryHelper <= ({1'b0, X[3:0]} - {1'b0, Y[3:0]} - InputCarry);
+      halfCarryHelper = ({1'b0, X[3:0]} - {1'b0, Y[3:0]} - InputCarry);
 
       // Calculate Carry
-      carryHelper     <= ({1'b0, X[7:0]} - {1'b0, Y[7:0]} - InputCarry);
+      carryHelper     = ({1'b0, X[7:0]} - {1'b0, Y[7:0]} - InputCarry);
 
       // Set flags
       fOut[FlagHalfCarryBit] = halfCarryHelper[4];
@@ -276,7 +276,6 @@ begin
       fOut[FlagHalfCarryBit] = 0;
     end
     DAA:      fOut[FlagCarryBit] = !InputSub && X[7:0] > 8'h99;
-    default:  fOut[FlagCarryBit] = 0;
     SCF:
     begin
       fOut[FlagSubBit] = 0;
